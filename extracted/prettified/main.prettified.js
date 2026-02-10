@@ -1,0 +1,2316 @@
+var yt = Object.create;
+var tt = Object.defineProperty;
+var wt = Object.getOwnPropertyDescriptor;
+var xt = Object.getOwnPropertyNames;
+var Dt = Object.getPrototypeOf,
+    Ct = Object.prototype.hasOwnProperty;
+var St = (h, i, a, g) => {
+    if (i && typeof i == "object" || typeof i == "function")
+        for (let b of xt(i)) !Ct.call(h, b) && b !== a && tt(h, b, {
+            get: () => i[b],
+            enumerable: !(g = wt(i, b)) || g.enumerable
+        });
+    return h
+};
+var ge = (h, i, a) => (a = h != null ? yt(Dt(h)) : {}, St(i || !h || !h.__esModule ? tt(a, "default", {
+    value: h,
+    enumerable: !0
+}) : a, h));
+var lt = require("child_process"),
+    s = require("electron"),
+    m = ge(require("fs"));
+var me = class {
+    constructor() {
+        this.rawRules = [], this.rules = []
+    }
+    addList(i) {
+        for (let a of i.split(`
+`)) this.add(a)
+    }
+    add(i) {
+        if (this.rawRules.push(i), i = i.trim(), i = i.replace(/[\r\n]/g, ""), i.length <= 3 || i[0] === "!") return;
+        let a = {
+            hasStart: !1,
+            hasEnd: !1,
+            rule: i,
+            text: i,
+            domain: !1,
+            items: []
+        };
+        if (i.indexOf("##") >= 0) return;
+        if (i.indexOf("@@") === 0) return;
+        if (i[0] === "|" && i[1] === "|") {
+            a.domain = !0;
+            let D = i.slice(2);
+            a.text = nt(D)
+        } else i[0] === "|" ? (a.hasStart = !0, a.text = i.slice(1)) : i[i.length - 1] === "|" && (a.hasEnd = !0, a.text = i.slice(0, -1));
+        let g = a.text.lastIndexOf("$");
+        if (g >= 0) {
+            a.text = a.text.slice(0, g);
+            return
+        }
+        if (a.text[0] === "/" && a.text[a.text.length - 1] === "/" || a.text.length <= 3) return;
+        let b = a.text.split(/\*+/).filter(function(D) {
+            return D
+        });
+        for (let D = 0; D < b.length; D++) {
+            let v = b[D],
+                B = v.split("^");
+            if (B.length > 0)
+                for (let L = 0; L < B.length; L++) {
+                    let k = B[L];
+                    if (k === "") continue;
+                    let F = B[L - 1],
+                        T = B[L + 1];
+                    a.items.push({
+                        text: k,
+                        before: F !== void 0,
+                        after: T !== void 0
+                    })
+                } else a.items.push({
+                    text: v,
+                    before: !1,
+                    after: !1
+                })
+        }
+        this.rules.push(a)
+    }
+    clearRules() {
+        this.rules = [], this.rawRules = []
+    }
+    matches(i) {
+        let a = {};
+        for (let g = 0; g < this.rules.length; g++) {
+            let b = this.rules[g];
+            if (Ft(b, i, a)) return !0
+        }
+        return !1
+    }
+};
+
+function Ft(h, i, a) {
+    let g = h.items;
+    h.domain && (a.domainUrl ? i = a.domainUrl : (i = nt(i), a.domainUrl = i));
+    let b = -1;
+    for (let D = 0; D < g.length; D++) {
+        let v = g[D],
+            B = i.indexOf(v.text, b + 1);
+        if (B <= b || (b = B, h.hasStart && D === 0 && B !== 0)) return !1;
+        if (h.hasEnd && D === g.length - 1) {
+            let L = i.length - v.text.length;
+            if (B !== L) return !1
+        }
+        if (v.before && !it(i[b - 1])) return !1;
+        if (v.after) {
+            let L = b + v.text.length;
+            if (i[L] !== void 0 && !it(i[L])) return !1
+        }
+    }
+    return !0
+}
+
+function it(h) {
+    return h === "/" || h === ":" || h === "?" || h === "=" || h === "&"
+}
+
+function nt(h) {
+    return h.indexOf("https://") === 0 && (h = h.slice(8)), h.indexOf("http://") === 0 && (h = h.slice(7)), h.indexOf("www.") === 0 && (h = h.slice(4)), h
+}
+var $ = ge(require("os")),
+    O = {
+        reset: "\x1B[0m",
+        bold: "\x1B[1m",
+        faint: "\x1B[2m",
+        muted: "\x1B[38;5;102m",
+        green: "\x1B[32m",
+        yellow: "\x1B[33m",
+        blue: "\x1B[34m",
+        purple: "\x1B[38;5;135m",
+        cyan: "\x1B[36m",
+        red: "\x1B[31m",
+        clearLine: "\x1B[2K\r"
+    },
+    de = 10,
+    At = 54;
+
+function vt(h) {
+    return `       \u2597\u2584\u259F\u2588\u2588
+       \u2584\u2588\u2588\u2588\u2588\u2588\u259B \u2588\u2584
+      \u2590\u2588\u2588\u2588\u2588\u2588\u259B \u259F\u2588\u2588\u2588
+      \u2590\u2588\u2588\u2588\u2588\u259B \u259F\u2588\u2588\u2588\u2588\u258C
+     \u2597 \u259C\u2588\u2588\u2588\u258E\u2590\u2588\u2588\u2588\u2588\u2588\u258C
+    \u2597\u2588\u2599 \u259C\u2588\u2588\u258E\u2590\u2588\u2588\u2588\u2588\u2588\u2588
+   \u2597\u2588\u2588\u2588\u2599 \u259C\u2588\u2599 \u259C\u2588\u2588\u2588\u2588\u2588\u2599
+  \u2597\u2588\u2588\u2588\u2588\u2588\u2599 \u2584\u2584\u2584\u2584\u2583\u2594\u2580\u2588\u2588\u2588\u2599
+  \u259D\u2588\u2588\u2588\u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2588\u2588\u2584 \u259C\u2588\u2598
+   \u2580\u2588\u2588\u2588\u2588\u259B \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2599 \u2598
+     \u2580\u2588\u259B \u259F\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u258C  Obsidian ${h}
+        \u259D\u2580\u2580\u2580\u2580\u2588\u2588\u2588\u2588\u2580`
+}
+
+function Et(h) {
+    let i = h.toString();
+    return i === "\x1B[A" ? {
+        name: "up"
+    } : i === "\x1B[B" ? {
+        name: "down"
+    } : i === "\x1B[C" ? {
+        name: "right"
+    } : i === "\x1B[D" ? {
+        name: "left"
+    } : i === "\x1B[3~" ? {
+        name: "delete"
+    } : i === "\x1B[Z" ? {
+        name: "shift-tab"
+    } : i === "\r" ? {
+        name: "return"
+    } : i === "	" ? {
+        name: "tab"
+    } : i === "\x7F" || i === "\b" ? {
+        name: "backspace"
+    } : i === "" ? {
+        name: "a",
+        ctrl: !0
+    } : i === "" ? {
+        name: "b",
+        ctrl: !0
+    } : i === "" ? {
+        name: "c",
+        ctrl: !0
+    } : i === "" ? {
+        name: "d",
+        ctrl: !0
+    } : i === "" ? {
+        name: "e",
+        ctrl: !0
+    } : i === "" ? {
+        name: "f",
+        ctrl: !0
+    } : i === "\v" ? {
+        name: "k",
+        ctrl: !0
+    } : i === "\f" ? {
+        name: "l",
+        ctrl: !0
+    } : i === "" ? {
+        name: "n",
+        ctrl: !0
+    } : i === "" ? {
+        name: "p",
+        ctrl: !0
+    } : i === "" ? {
+        name: "r",
+        ctrl: !0
+    } : i === "" ? {
+        name: "u",
+        ctrl: !0
+    } : i === "" ? {
+        name: "w",
+        ctrl: !0
+    } : i === "\x1Bb" ? {
+        name: "b",
+        alt: !0
+    } : i === "\x1Bf" ? {
+        name: "f",
+        alt: !0
+    } : i === "\x1B\x7F" || i === "\x1B\b" ? {
+        name: "backspace",
+        alt: !0
+    } : i === "\x1B" || i === "\x1B\x1B" || i === "\x1B[" ? {
+        name: "escape"
+    } : {
+        name: i
+    }
+}
+
+function Ot(h) {
+    let i = [],
+        a = "",
+        g = null,
+        b = !1;
+    for (let D of h) {
+        if (b) {
+            a += D, b = !1;
+            continue
+        }
+        if (D === "\\") {
+            b = !0;
+            continue
+        }
+        if (g) {
+            D === g ? g = null : a += D;
+            continue
+        }
+        if (D === '"' || D === "'") {
+            g = D;
+            continue
+        }
+        if (D === " " || D === "	") {
+            a && (i.push(a), a = "");
+            continue
+        }
+        a += D
+    }
+    return a && i.push(a), i
+}
+
+function Bt(h) {
+    if (!h) return [];
+    let i = [],
+        a = Array.from(h.matchAll(/\[?(\w+(?:=(?:<[^>]+>)?)?)\]?/g));
+    for (let g of a) {
+        let b = g[1];
+        b.startsWith("<") || (b.includes("=") && (b = b.replace(/<[^>]+>/, "")), i.push(b))
+    }
+    return i
+}
+var Me = class {
+    constructor(i, a) {
+        this.currentVaultName = "";
+        this.inputBuffer = "";
+        this.cursorPos = 0;
+        this.history = [];
+        this.historyIndex = -1;
+        this.isProcessing = !1;
+        this.inputBeforeAutocomplete = "";
+        this.suggestions = [];
+        this.suggestionIndex = -1;
+        this.suggestionWindowStart = 0;
+        this.suggestionLines = 0;
+        this.isSearchMode = !1;
+        this.searchQuery = "";
+        this.searchMatchIndex = 0;
+        this.searchMatches = [];
+        this.inputBeforeSearch = "";
+        this.getCompletions = () => [];
+        this.maxCommandLen = 0;
+        this.totalLines = 2 + de + 2;
+        this.socket = i, this.currentVaultId = a
+    }
+    async initCompletions(i) {
+        this.currentVaultName = i.getNameForVault(this.currentVaultId) || "";
+        let a = {},
+            g = [],
+            b = [];
+        try {
+            let F = await i.executeCliRequest(this.currentVaultId, ["__completions"]);
+            F && F.startsWith("{") && (a = JSON.parse(F))
+        } catch (F) {}
+        try {
+            g = (await i.executeCliRequest(this.currentVaultId, ["vaults"])).split(`
+`).filter(T => T.trim())
+        } catch (F) {}
+        try {
+            let F = await i.executeCliRequest(this.currentVaultId, ["__files", "limit=1000"]);
+            F && F.startsWith("[") && (b = JSON.parse(F))
+        } catch (F) {}
+        let D = {},
+            v = {},
+            B = {},
+            L = {};
+        for (let [F, T] of Object.entries(a))
+            if (L[F] = T.description, T.flags) {
+                let P = [],
+                    M = {},
+                    K = {};
+                for (let [Q, G] of Object.entries(T.flags)) {
+                    let X = G.value ? `${Q}=` : Q;
+                    P.push(X), M[X] = G.description, G.value && G.value.includes("|") && (K[Q] = G.value.split("|"))
+                }
+                D[F] = P, v[F] = M, B[F] = K
+            } else D[F] = Bt(T.usage);
+        L.exit = "Exit the CLI", L.quit = "Exit the CLI", L["vault:open"] = "Switch to a different vault";
+        let k = Object.keys(a).concat(["exit", "quit", "vault:open"]).sort();
+        this.maxCommandLen = Math.max(...k.map(F => F.length)), this.getCompletions = F => {
+            let T = F.trim(),
+                P = T.split(/\s+/),
+                M = F.length > 0 && F[F.length - 1] === " ",
+                K = M ? "" : P[P.length - 1] || "";
+            if (P.length <= 1 && !M) {
+                let N = K.toLowerCase(),
+                    R = k.filter(V => V.toLowerCase().startsWith(N)),
+                    z = N.length > 0 ? k.filter(V => {
+                        var oe;
+                        return !V.toLowerCase().startsWith(N) && ((oe = L[V]) == null ? void 0 : oe.toLowerCase().includes(N))
+                    }) : [];
+                return [...R, ...z].map(V => ({
+                    text: V,
+                    description: L[V]
+                }))
+            }
+            let Q = P[0],
+                G = M ? T : P.slice(0, -1).join(" ");
+            if (Q === "vault:open" && P.length <= 2) return g.filter(N => N.toLowerCase().startsWith(K.toLowerCase())).map(N => ({
+                text: "vault:open " + (N.includes(" ") ? `"${N}"` : N),
+                description: "Open vault"
+            }));
+            let X = D[Q],
+                ue = v[Q] || {},
+                be = B[Q] || {};
+            if (K.includes("=")) {
+                let N = K.indexOf("="),
+                    R = K.substring(0, N),
+                    z = K.substring(N + 1).toLowerCase(),
+                    V = M ? T : P.slice(0, -1).join(" ");
+                if (R === "file" || R === "path") {
+                    let J = Q.startsWith("base:") ? ".base" : null;
+                    return b.filter(q => (!J || q.endsWith(J)) && q.toLowerCase().includes(z)).slice(0, 20).map(q => {
+                        let ae = R === "file" && q.endsWith(".md") ? q.slice(0, -3) : q;
+                        return {
+                            text: V + (V ? " " : "") + R + `="${ae}"`,
+                            description: ""
+                        }
+                    })
+                }
+                if (R === "folder") {
+                    let J = new Set;
+                    for (let q of b) {
+                        let ae = q.lastIndexOf("/");
+                        ae > 0 && J.add(q.substring(0, ae))
+                    }
+                    return Array.from(J).filter(q => q.toLowerCase().includes(z)).slice(0, 20).map(q => ({
+                        text: V + (V ? " " : "") + R + `="${q}"`,
+                        description: ""
+                    }))
+                }
+                let oe = be[R];
+                if (oe) return oe.filter(J => J.toLowerCase().startsWith(z)).map(J => ({
+                    text: V + (V ? " " : "") + R + "=" + J,
+                    description: ue[R + "="]
+                }))
+            }
+            if (X && X.length > 0) {
+                let N = P.slice(1).map(R => {
+                    let z = R.indexOf("=");
+                    return z >= 0 ? R.substring(0, z + 1) : R
+                });
+                return X.filter(R => {
+                    let z = R.indexOf("=") >= 0 ? R.substring(0, R.indexOf("=") + 1) : R;
+                    return R.startsWith(K) && !N.includes(z)
+                }).map(R => ({
+                    text: G + " " + R,
+                    description: ue[R]
+                }))
+            }
+            return []
+        }
+    }
+    writeWelcome(i) {
+        this.socket.write("\x1B[2J\x1B[H"), this.socket.write(`${$.EOL}  ${O.bold}${O.purple}${vt(i)}
+${O.reset}${$.EOL}`), this.currentVaultName && this.socket.write(`  ${O.bold}${this.currentVaultName}${O.reset}${$.EOL}`), this.socket.write(`  ${O.faint}Tab to autocomplete, \u2191/\u2193 for history, Ctrl+C to quit${O.reset}${$.EOL}${$.EOL}`)
+    }
+    writeDivider() {
+        this.socket.write(`${$.EOL}${O.clearLine}${O.faint}${"\u2500".repeat(At)}${O.reset}${$.EOL}`)
+    }
+    writePrompt(i) {
+        if (this.isSearchMode) {
+            let a = this.searchMatches[this.searchMatchIndex] || "",
+                g = a;
+            if (a && this.searchQuery) {
+                let b = a.toLowerCase().indexOf(this.searchQuery.toLowerCase());
+                if (b >= 0) {
+                    let D = a.slice(0, b),
+                        v = a.slice(b, b + this.searchQuery.length),
+                        B = a.slice(b + this.searchQuery.length);
+                    g = `${D}${O.yellow}${v}${O.reset}${B}`
+                }
+            }
+            this.socket.write(`${O.clearLine}${O.purple}>${O.reset} ${g||i}`), this.socket.write(`${$.EOL}${O.clearLine}${O.purple}search:${O.reset} ${this.searchQuery}${this.searchMatches.length===0&&this.searchQuery?`${O.faint} (no match)${O.reset}`:""}`)
+        } else this.socket.write(`${O.clearLine}${O.purple}>${O.reset} ${i}`)
+    }
+    writeSuggestions() {
+        let {
+            suggestions: i,
+            suggestionIndex: a,
+            suggestionWindowStart: g,
+            maxCommandLen: b
+        } = this;
+        a >= 0 && (a < g ? this.suggestionWindowStart = a : a >= g + de && (this.suggestionWindowStart = a - de + 1));
+        let D = Math.min(this.suggestionWindowStart + de, i.length),
+            v = Math.max(b, ...i.map(L => L.text.length));
+        for (let L = 0; L < de; L++) {
+            this.socket.write($.EOL);
+            let k = this.suggestionWindowStart + L;
+            if (k < i.length) {
+                let {
+                    text: F,
+                    description: T
+                } = i[k], P = T ? F.padEnd(v + 2) : F, M = T ? `${O.faint}${T}${O.reset}` : "";
+                k === a ? this.socket.write(`  ${O.bold}${O.purple}> ${P}${O.reset}${M}`) : this.socket.write(`    ${O.muted}${P}${O.reset}${M}`)
+            }
+            this.socket.write("\x1B[K")
+        }
+        let B = i.length - D;
+        this.socket.write($.EOL), B > 0 && this.socket.write(`    ${O.faint}${B} more${O.reset}`), this.socket.write("\x1B[K"), this.socket.write($.EOL + "\x1B[K"), this.suggestionLines = de + 2
+    }
+    writeOutput(i, a) {
+        let g = a ? `${a}${i}${O.reset}` : i;
+        this.socket.write(`${$.EOL}${$.EOL}${g}${$.EOL}`)
+    }
+    clearSuggestionDisplay() {
+        if (this.suggestionLines > 0) {
+            for (let i = 0; i < this.suggestionLines; i++) this.socket.write("\x1B[B");
+            for (let i = 0; i < this.suggestionLines; i++) this.socket.write("\x1B[2K\x1B[A");
+            this.suggestionLines = 0
+        }
+    }
+    reserveSpace() {
+        for (let i = 0; i < this.totalLines; i++) this.socket.write($.EOL);
+        this.socket.write(`\x1B[${this.totalLines}A`)
+    }
+    moveCursorLeft() {
+        this.socket.write("\x1B[D")
+    }
+    moveCursorRight() {
+        this.socket.write("\x1B[C")
+    }
+    positionCursor() {
+        let i = this.isSearchMode ? 8 + this.searchQuery.length : 2 + this.cursorPos,
+            a = this.isSearchMode ? this.suggestionLines : this.suggestionLines;
+        a > 0 && this.socket.write(`\x1B[${a}A`), this.socket.write(`\r\x1B[${i}C`)
+    }
+    clearAndEnd() {
+        this.socket.write($.EOL), this.socket.end()
+    }
+    prepareForOutput() {
+        this.socket.write("\x1B[A\x1B[2K\x1B[A\x1B[2K"), this.socket.write($.EOL + $.EOL)
+    }
+    clearSuggestions() {
+        this.clearSuggestionDisplay(), this.suggestions = [], this.suggestionIndex = -1, this.suggestionWindowStart = 0
+    }
+    updateSuggestions() {
+        this.suggestions = this.getCompletions(this.inputBuffer), this.suggestionIndex = -1, this.suggestionWindowStart = 0, this.clearSuggestionDisplay(), this.writePrompt(this.inputBuffer), this.writeSuggestions(), this.positionCursor()
+    }
+    updateSearchMatches() {
+        let i = this.searchQuery.toLowerCase();
+        this.searchMatches = this.history.filter(a => a.toLowerCase().includes(i)), this.searchMatchIndex = 0
+    }
+    redraw() {
+        this.isSearchMode ? (this.socket.write("\x1B[A\x1B[2K\r"), this.writePrompt(this.inputBuffer), this.socket.write(`\r\x1B[${8+this.searchQuery.length}C`)) : (this.clearSuggestionDisplay(), this.writePrompt(this.inputBuffer), this.writeSuggestions(), this.positionCursor())
+    }
+    resetPrompt() {
+        this.inputBuffer = "", this.cursorPos = 0, this.historyIndex = -1, this.reserveSpace(), this.writeDivider(), this.updateSuggestions()
+    }
+    handleKeyInput(i) {
+        if (i.ctrl && (i.name === "c" || i.name === "d")) return this.clearSuggestionDisplay(), this.suggestions = [], this.suggestionIndex = -1, this.suggestionWindowStart = 0, {
+            type: "exit"
+        };
+        if (i.ctrl && i.name === "l") return this.socket.write("\x1B[2J\x1B[H"), this.reserveSpace(), this.writeDivider(), this.redraw(), {
+            type: "continue"
+        };
+        if (i.ctrl && i.name === "r") return this.isSearchMode ? (this.searchMatches.length > 0 && (this.searchMatchIndex = (this.searchMatchIndex + 1) % this.searchMatches.length), this.redraw()) : (this.isSearchMode = !0, this.inputBeforeSearch = this.inputBuffer, this.searchQuery = "", this.searchMatchIndex = 0, this.searchMatches = this.history.slice(), this.clearSuggestionDisplay(), this.writePrompt(this.inputBuffer), this.socket.write(`\r\x1B[${8+this.searchQuery.length}C`)), {
+            type: "continue"
+        };
+        if (this.isSearchMode) {
+            if (i.name === "escape") return this.isSearchMode = !1, this.inputBuffer = this.inputBeforeSearch, this.cursorPos = this.inputBuffer.length, this.socket.write("\x1B[2K\x1B[A\x1B[2K\r"), this.updateSuggestions(), {
+                type: "continue"
+            };
+            if (i.name === "return") {
+                this.isSearchMode = !1;
+                let a = this.searchMatches[this.searchMatchIndex];
+                return a ? (this.inputBuffer = a.endsWith(" ") ? a : a + " ", this.cursorPos = this.inputBuffer.length) : (this.inputBuffer = this.inputBeforeSearch, this.cursorPos = this.inputBuffer.length), this.socket.write("\x1B[2K\x1B[A\x1B[2K\r"), this.updateSuggestions(), {
+                    type: "continue"
+                }
+            }
+            return i.name === "backspace" ? (this.searchQuery.length > 0 && (this.searchQuery = this.searchQuery.slice(0, -1), this.updateSearchMatches(), this.redraw()), {
+                type: "continue"
+            }) : i.name.length === 1 && !i.ctrl ? (this.searchQuery += i.name, this.updateSearchMatches(), this.redraw(), {
+                type: "continue"
+            }) : {
+                type: "continue"
+            }
+        }
+        if (i.name === "escape") return this.inputBeforeAutocomplete ? (this.inputBuffer = this.inputBeforeAutocomplete, this.cursorPos = this.inputBuffer.length, this.inputBeforeAutocomplete = "", this.updateSuggestions()) : this.suggestionIndex >= 0 ? (this.suggestionIndex = -1, this.redraw()) : this.inputBuffer && (this.inputBuffer = "", this.cursorPos = 0, this.historyIndex = -1, this.updateSuggestions()), {
+            type: "continue"
+        };
+        if (i.name === "return") {
+            if (!this.inputBuffer.trim() && this.suggestionIndex < 0) return {
+                type: "continue"
+            };
+            if (this.suggestionIndex >= 0 && this.suggestions[this.suggestionIndex]) {
+                let g = this.suggestions[this.suggestionIndex].text;
+                if (g !== this.inputBuffer.trim() || !this.inputBuffer.endsWith(" ")) return this.inputBeforeAutocomplete = this.inputBuffer, this.inputBuffer = g.endsWith("=") ? g : g + " ", this.cursorPos = this.inputBuffer.length, this.updateSuggestions(), {
+                    type: "continue"
+                }
+            }
+            let a = this.inputBuffer.trim();
+            return this.clearSuggestions(), this.prepareForOutput(), {
+                type: "execute",
+                command: a
+            }
+        }
+        if (i.name === "tab") {
+            if (this.suggestions.length > 0)
+                if (this.suggestionIndex < 0) this.inputBeforeAutocomplete = this.inputBuffer, this.suggestionIndex = 0, this.redraw();
+                else {
+                    let a = this.suggestions[this.suggestionIndex].text;
+                    this.inputBeforeAutocomplete = this.inputBuffer, this.inputBuffer = a.endsWith("=") ? a : a + " ", this.cursorPos = this.inputBuffer.length, this.updateSuggestions()
+                } return {
+                type: "continue"
+            }
+        }
+        if (i.name === "shift-tab") return this.suggestionIndex >= 0 && (this.inputBeforeAutocomplete && (this.inputBuffer = this.inputBeforeAutocomplete, this.cursorPos = this.inputBuffer.length, this.inputBeforeAutocomplete = ""), this.suggestionIndex = -1, this.updateSuggestions()), {
+            type: "continue"
+        };
+        if (i.name === "up" || i.ctrl && i.name === "p") return this.suggestionIndex >= 0 ? (this.suggestionIndex = this.suggestionIndex <= 0 ? this.suggestions.length - 1 : this.suggestionIndex - 1, this.redraw()) : this.history.length > 0 && this.historyIndex < this.history.length - 1 && (this.historyIndex++, this.inputBuffer = this.history[this.historyIndex], this.cursorPos = this.inputBuffer.length, this.updateSuggestions()), {
+            type: "continue"
+        };
+        if (i.name === "down" || i.ctrl && i.name === "n") return this.suggestionIndex >= 0 ? (this.suggestionIndex = (this.suggestionIndex + 1) % this.suggestions.length, this.redraw()) : this.historyIndex > 0 ? (this.historyIndex--, this.inputBuffer = this.history[this.historyIndex], this.cursorPos = this.inputBuffer.length, this.updateSuggestions()) : this.historyIndex === 0 ? (this.historyIndex = -1, this.inputBuffer = "", this.cursorPos = 0, this.updateSuggestions()) : this.suggestions.length > 0 && (this.inputBeforeAutocomplete = this.inputBuffer, this.suggestionIndex = 0, this.redraw()), {
+            type: "continue"
+        };
+        if (i.name === "backspace") return this.cursorPos > 0 && (this.inputBuffer = this.inputBuffer.slice(0, this.cursorPos - 1) + this.inputBuffer.slice(this.cursorPos), this.cursorPos--, this.updateSuggestions()), {
+            type: "continue"
+        };
+        if (i.name === "delete") return this.cursorPos < this.inputBuffer.length && (this.inputBuffer = this.inputBuffer.slice(0, this.cursorPos) + this.inputBuffer.slice(this.cursorPos + 1), this.updateSuggestions()), {
+            type: "continue"
+        };
+        if (i.name === "left" || i.ctrl && i.name === "b") return this.cursorPos > 0 && (this.cursorPos--, this.moveCursorLeft()), {
+            type: "continue"
+        };
+        if (i.name === "right" || i.ctrl && i.name === "f") {
+            if (this.cursorPos === this.inputBuffer.length && this.suggestions.length > 0) {
+                let a = this.suggestionIndex >= 0 ? this.suggestionIndex : 0,
+                    g = this.suggestions[a].text;
+                this.inputBeforeAutocomplete = "", this.suggestionIndex = -1, this.inputBuffer = g.endsWith("=") ? g : g + " ", this.cursorPos = this.inputBuffer.length, this.updateSuggestions()
+            } else this.cursorPos < this.inputBuffer.length && (this.cursorPos++, this.moveCursorRight());
+            return {
+                type: "continue"
+            }
+        }
+        if (i.ctrl && i.name === "a") return this.cursorPos = 0, this.redraw(), {
+            type: "continue"
+        };
+        if (i.ctrl && i.name === "e") return this.cursorPos = this.inputBuffer.length, this.redraw(), {
+            type: "continue"
+        };
+        if (i.ctrl && i.name === "u") return this.inputBuffer = this.inputBuffer.slice(this.cursorPos), this.cursorPos = 0, this.updateSuggestions(), {
+            type: "continue"
+        };
+        if (i.ctrl && i.name === "k") return this.inputBuffer = this.inputBuffer.slice(0, this.cursorPos), this.updateSuggestions(), {
+            type: "continue"
+        };
+        if (i.ctrl && i.name === "w" || i.alt && i.name === "backspace") {
+            if (this.cursorPos > 0) {
+                let a = this.inputBuffer.slice(0, this.cursorPos),
+                    g = this.inputBuffer.slice(this.cursorPos),
+                    b = a.trimEnd(),
+                    D = b.lastIndexOf(" "),
+                    v = D >= 0 ? b.slice(0, D + 1) : "";
+                this.inputBuffer = v + g, this.cursorPos = v.length, this.updateSuggestions()
+            }
+            return {
+                type: "continue"
+            }
+        }
+        if (i.alt && i.name === "b") {
+            if (this.cursorPos > 0) {
+                let b = this.inputBuffer.slice(0, this.cursorPos).trimEnd().lastIndexOf(" ");
+                this.cursorPos = b >= 0 ? b + 1 : 0, this.redraw()
+            }
+            return {
+                type: "continue"
+            }
+        }
+        if (i.alt && i.name === "f") {
+            if (this.cursorPos < this.inputBuffer.length) {
+                let g = this.inputBuffer.slice(this.cursorPos).match(/^\s*\S+/);
+                g ? this.cursorPos += g[0].length : this.cursorPos = this.inputBuffer.length, this.redraw()
+            }
+            return {
+                type: "continue"
+            }
+        }
+        return i.name.length === 1 && !i.ctrl && !i.alt ? (this.inputBuffer = this.inputBuffer.slice(0, this.cursorPos) + i.name + this.inputBuffer.slice(this.cursorPos), this.cursorPos++, this.updateSuggestions(), {
+            type: "continue"
+        }) : {
+            type: "continue"
+        }
+    }
+    async executeCommand(i, a) {
+        var T;
+        let {
+            executeCliRequest: g,
+            getIdForVault: b,
+            openVaultById: D
+        } = a;
+        if (i === "exit" || i === "quit") {
+            this.clearAndEnd();
+            return
+        }
+        this.history[0] !== i && this.history.unshift(i);
+        let v = Ot(i);
+        if (v[0] === "obsidian") {
+            let P = 'You are already in the Obsidian TUI. Commands can be typed directly, e.g. "help"';
+            v.length > 1 && (P += `
+Did you mean: ${v.slice(1).join(" ")}`), this.writeOutput(P, O.yellow);
+            return
+        }
+        if (v[0] === "vault:open") {
+            if (!v[1]) {
+                this.writeOutput("Missing vault name: vault:open <vault-name>", O.red);
+                return
+            }
+            let P = v[1],
+                M = b(P);
+            if (!M) {
+                this.writeOutput(`Vault not found: ${P}`, O.red);
+                return
+            }
+            D(M), this.currentVaultId = M, this.currentVaultName = P, this.writeOutput(`Opened vault: ${P}`);
+            return
+        }
+        let B = (T = v[0]) != null && T.startsWith("vault=") ? v[0] : null,
+            L = B ? b(B.slice(6)) : this.currentVaultId,
+            k = B ? v.slice(1) : v,
+            F = await g(L || this.currentVaultId, k);
+        F && this.writeOutput(F)
+    }
+};
+async function st(h, i, a) {
+    let g = new Me(h, i);
+    await g.initCompletions(a), g.writeWelcome(a.version), g.reserveSpace(), g.writeDivider(), g.updateSuggestions();
+    let b = () => {
+            h.removeListener("data", B), h.removeListener("error", v), h.removeListener("close", D)
+        },
+        D = () => {
+            b()
+        },
+        v = () => {
+            b(), h.destroy()
+        },
+        B = async L => {
+            if (g.isProcessing) return;
+            let k = Et(L),
+                F = g.handleKeyInput(k);
+            if (F.type === "exit") {
+                b(), g.clearAndEnd();
+                return
+            }
+            if (F.type === "execute") {
+                g.isProcessing = !0;
+                try {
+                    await g.executeCommand(F.command, a)
+                } catch (T) {
+                    g.writeOutput(`Error: ${T instanceof Error?T.message:String(T)}`, O.red)
+                } finally {
+                    g.isProcessing = !1
+                }
+                if (h.destroyed) {
+                    b();
+                    return
+                }
+                g.resetPrompt()
+            }
+        };
+    h.on("data", B), h.on("error", v), h.on("close", D)
+}
+var Ae = require("net"),
+    ut = ge(require("original-fs")),
+    te = ge(require("os")),
+    S = ge(require("path"));
+
+function rt(h, i) {
+    return h.length <= i ? h : h.slice(0, i - 1).trim() + "\u2026"
+}
+var ct = require("url"),
+    ft = require("util"),
+    U = process.platform === "darwin",
+    Y = process.platform === "win32",
+    Pt = process.versions.electron,
+    It = parseInt(Pt.split(".")[0]);
+
+function re(h, i) {
+    return h ? i() : []
+}
+
+function Re(h) {
+    let i = [];
+    for (let a = 0; a < h; a++) i.push((Math.random() * 16 | 0).toString(16));
+    return i.join("")
+}
+
+function ot(h) {
+    return typeof h == "string" && /^[\\\/]{2,}[^\\\/]+[\\\/]+[^\\\/]+/.test(h)
+}
+
+function at(h, i, a) {
+    let {
+        editFlags: g,
+        misspelledWord: b,
+        dictionarySuggestions: D
+    } = a, v = a.selectionText.trim(), B = v.length > 0, L = !!a.linkURL, k = P => g[`can${P}`] && B, F = a.isEditable || B, T = [...re(U, () => [{
+        label: `Look up \u201C${v.length<=40?v:v.slice(0,39).trim()+"\u2026"}\u201D`,
+        visible: B && !L,
+        click() {
+            i.showDefinitionForSelection()
+        }
+    }, {
+        type: "separator"
+    }]), {
+        accelerator: "CmdOrCtrl+X",
+        label: "Cut",
+        role: k("Cut") ? "cut" : void 0,
+        enabled: k("Cut"),
+        visible: a.isEditable
+    }, {
+        accelerator: "CmdOrCtrl+C",
+        label: "Copy",
+        role: k("Copy") ? "copy" : void 0,
+        enabled: k("Copy"),
+        visible: a.isEditable || B
+    }, {
+        accelerator: "CmdOrCtrl+V",
+        label: "Paste",
+        role: g.canPaste ? "paste" : void 0,
+        enabled: g.canPaste,
+        visible: a.isEditable
+    }, {
+        accelerator: "CmdOrCtrl+Shift+V",
+        label: "Paste as text",
+        role: g.canPaste ? "pasteAndMatchStyle" : void 0,
+        enabled: g.canPaste,
+        visible: a.isEditable
+    }];
+    if (b && b.length >= 1) {
+        let P = [];
+        D && D.length > 0 ? D.slice(0, 5).forEach(M => {
+            P.push({
+                label: M,
+                click: () => {
+                    i.replaceMisspelling(M)
+                }
+            })
+        }) : P.push({
+            label: "No suggestion",
+            enabled: !1
+        }), P.push({
+            label: "Add to Dictionary",
+            click: () => {
+                i.session.addWordToSpellCheckerDictionary(b), i.replaceMisspelling(b)
+            }
+        }), P.push({
+            type: "separator"
+        }), T = P.concat(T), F = !0
+    }
+    F && s.Menu.buildFromTemplate(T).popup({
+        window: h
+    })
+}
+
+function se(h, i) {
+    try {
+        return h()
+    } catch (a) {
+        return console.log("Ignored:", a.toString()), i
+    }
+}
+module.exports = function(h, i, a) {
+    var et;
+    if (It < 18) {
+        s.dialog.showErrorBox("Manual update required", "This version of Obsidian is no longer supported. Please download and install the latest version from https://obsidian.md"), s.shell.openExternal("https://obsidian.md/download"), s.app.quit();
+        return
+    }
+    let g = S.basename(process.argv0),
+        b = g.toLowerCase().includes("obsidian"),
+        D = process.argv.slice(b ? 1 : 2),
+        v = Re(16),
+        B = !!process.stdin.isTTY && !!process.stdout.isTTY,
+        L = !1;
+    Y && ((et = D[0]) != null && et.startsWith("session=")) && (v = D.shift().slice(8), L = !0, D[0] === "tty" ? (B = !0, D.shift()) : B = !1);
+    let k = Y ? `\\\\.\\pipe\\${v}` : S.join(te.tmpdir(), `${v}.sock`);
+    if (!s.app.requestSingleInstanceLock({
+            data: JSON.stringify({
+                argv: D,
+                endpoint: k,
+                tty: B
+            })
+        })) {
+        if (L) {
+            process.exit(0);
+            return
+        }
+        i.emit("disable", !0), i.emit("silence", !0), process.removeAllListeners("uncaughtException"), process.on("uncaughtException", function(r) {
+            console.error("Uncaught Exception", r), process.exit(1)
+        });
+        let t = (0, Ae.createServer)(r => {
+            r.setNoDelay(!0), B && process.stdin.setRawMode(!0), process.stdin.pipe(r), r.pipe(process.stdout), r.on("end", async () => {
+                if (!Y) try {
+                    m.unlinkSync(k)
+                } catch (u) {}
+                await new Promise(u => {
+                    process.stdout.writableLength > 0 ? process.stdout.once("drain", u) : process.nextTick(u)
+                }), process.exit(0)
+            }), r.on("error", () => {
+                t.close(() => process.exit(1))
+            }), t.close()
+        });
+        t.listen(k);
+        return
+    }
+    let F = ["SharedArrayBuffer"];
+    for (let t of process.argv) t.startsWith("--enable-features=") && (F = F.concat(t.substring(18).split(",").map(r => r.trim())));
+    s.app.commandLine.appendSwitch("enable-features", F.join(",")), process.removeAllListeners("uncaughtException"), process.on("uncaughtException", function(t) {
+        if (console.error("Uncaught Exception", t), t.message.includes("Render frame was disposed before WebFrameMain could be accessed") || t.message.indexOf("net::ERR") !== -1) return;
+        let u = `Uncaught Exception:
+` + (t.stack ? t.stack : `${t.name}: ${t.message}`);
+        s.dialog.showErrorBox("A JavaScript error occurred in the main process", u)
+    });
+    let T = "",
+        P = !1;
+    i.on("update-manual-required", () => T = "update-manual-required"), i.on("update-downloaded", () => T = "update-downloaded"), i.on("check-start", () => P = !0), i.on("check-end", () => P = !1);
+    let M = s.app.getPath("userData"),
+        K = (() => {
+            try {
+                return s.app.getPath("documents")
+            } catch (t) {}
+            try {
+                let t = S.join(s.app.getPath("home"), "Documents");
+                if (t && m.existsSync(t)) return t
+            } catch (t) {}
+            return M
+        })(),
+        Q = (() => {
+            try {
+                return s.app.getPath("desktop")
+            } catch (t) {}
+            try {
+                let t = S.join(s.app.getPath("home"), "Desktop");
+                if (t && m.existsSync(t)) return t
+            } catch (t) {}
+            return M
+        })(),
+        G = {},
+        X = new me,
+        ue = t => S.join(M, t + ".json");
+
+    function be(t, r) {
+        se(() => m.writeFileSync(ue(t), JSON.stringify(r)))
+    }
+
+    function N(t) {
+        return se(() => JSON.parse(m.readFileSync(ue(t), "utf8")) || {}, {})
+    }
+
+    function R(t) {
+        se(() => m.unlinkSync(ue(t)))
+    }
+    let z = null;
+    async function V() {
+        let t = S.join(M, "adblock");
+        m.existsSync(t) || m.mkdirSync(t);
+        let r = x.hasOwnProperty("adblockFrequency") ? x.adblockFrequency : qe,
+            u = new me,
+            d = x.adblock || je;
+        for (let c of d) {
+            let w = S.basename(c),
+                y = S.join(t, w),
+                e = !0;
+            try {
+                let n = await m.promises.stat(y),
+                    o = (new Date().getTime() - n.mtime.getTime()) / 864e5;
+                e = r === 0 ? !1 : o >= r
+            } catch (n) {}
+            if (!e) {
+                let n = S.join(t, S.basename(c)),
+                    o = await m.promises.readFile(n, "utf8");
+                u.addList(o);
+                continue
+            }
+            console.log(`Retrieving newer version of ${c}`);
+            try {
+                let o = await (await s.net.fetch(c)).text();
+                await m.promises.writeFile(y, o), u.addList(o)
+            } catch (n) {
+                console.log("Failed to retrieve adblock list: " + n)
+            }
+        }
+        X = u, z !== null && clearTimeout(z), r !== 0 && (r = Math.min(r, 24), z = setTimeout(V, r * 864e5))
+    }
+
+    function oe(t) {
+        try {
+            return m.accessSync(t, m.constants.R_OK | m.constants.W_OK), !0
+        } catch (r) {
+            return !1
+        }
+    }
+    let J = (() => {
+        let t = S.join(h, "package.json");
+        try {
+            if (m.existsSync(t)) return JSON.parse(m.readFileSync(t, "utf8")).version
+        } catch (r) {}
+        return s.app.getVersion()
+    })();
+    async function ce(t, r, u, d) {
+        let c = r.match(/^([a-z][a-z0-9+\-.]*):/i),
+            w = c ? c[1].toLowerCase() : "";
+        if (!w || w === Ue || w === "about") return;
+        if (w !== "http" && w !== "https" && w !== "obsidian" && !(x.openSchemes && x.openSchemes[w])) {
+            let n = await s.dialog.showMessageBox(t, {
+                message: `Are you sure you want to open this link?
+
+Link: ` + rt(r, 200),
+                type: "question",
+                buttons: ["Open this link", "Cancel"],
+                defaultId: 1,
+                cancelId: 1,
+                title: "Open link",
+                checkboxLabel: "Always open " + w + ": links in the future"
+            });
+            if (n.response !== 0) return;
+            w && n.checkboxChecked && (x.openSchemes = x.openSchemes || {}, x.openSchemes[w] = !0, j())
+        }
+        if (d !== "_external" && (w === "http" || w === "https")) {
+            let n = "tab",
+                o = !1;
+            u === "new-window" ? (n = "window", o = !0) : d === "split" ? (n = "split", o = !0) : u === "background-tab" ? (n = "tab", o = !1) : u === "foreground-tab" && (n = "tab", o = !0);
+            let p = `(() => {let e = new CustomEvent('open-url', ${JSON.stringify({cancelable:!0,detail:{url:r,leaf:n,active:o}})}); window.dispatchEvent(e); return e.defaultPrevented;})()`;
+            if (await t.webContents.executeJavaScript(p)) return
+        }
+        if (w !== "file") return console.log("Opening URL: " + r), s.shell.openExternal(r);
+        r = r.substring(c[0].length), r.startsWith("//") && (r = r.substring(2)), Y && r.startsWith("/") && (r = r.substring(1));
+        let y = r.lastIndexOf("#"),
+            e = "";
+        y !== -1 && (e = r.substr(y), r = r.substr(0, y)), r = decodeURIComponent(r), r = S.normalize(r) + e, !((ot(r) || Y && !/^[a-z]:/i.test(r)) && (await s.dialog.showMessageBox(t, {
+            message: `This file is located on a remote server, and may be dangerous.
+Are you sure you want to open it?
+
+Location: ` + r,
+            type: "warning",
+            buttons: ["Open this file", "Cancel"],
+            defaultId: 1,
+            cancelId: 1,
+            title: "Remote file warning"
+        })).response !== 0) && (console.log("Opening file: " + r), q(r))
+    }
+
+    function q(t) {
+        !Y && !U ? s.shell.openExternal((0, ct.pathToFileURL)(t).href) : s.shell.openPath(t)
+    }
+
+    function ae(t) {
+        if (s.remote) try {
+            s.remote.enable(t)
+        } catch (r) {
+            console.error(r)
+        }
+    }
+
+    function ke(t, r) {
+        let u = t.webContents;
+        We(u), ae(u), u.on("will-navigate", (w, y) => {
+            y.indexOf(Ne) !== 0 && (w.preventDefault(), y.indexOf(ee) !== 0 && ce(t, y))
+        }), t.on("app-command", (w, y) => {
+            y === "browser-backward" ? u.executeJavaScript("history.back()") : y === "browser-forward" && u.executeJavaScript("history.forward()")
+        }), t.on("swipe", (w, y) => {
+            y === "left" ? u.executeJavaScript("history.back()") : y === "right" && u.executeJavaScript("history.forward()")
+        }), t.on("focus", () => {
+            t.focusTime = Date.now(), Ce(), Le(he(t), "window-always-on-top", {
+                checked: t.isAlwaysOnTop(),
+                enabled: !r
+            })
+        }), t.on("always-on-top-changed", () => {
+            t === s.BrowserWindow.getFocusedWindow() && Le(he(t), "window-always-on-top", {
+                checked: t.isAlwaysOnTop()
+            })
+        }), t.on("maximize", () => {
+            t.isAlwaysOnTop() && t.setAlwaysOnTop(!1)
+        }), t.on("enter-full-screen", () => {
+            t.isAlwaysOnTop() && t.setAlwaysOnTop(!1)
+        });
+        let d = () => t.webContents.executeJavaScript("window.dispatchEvent(new Event('focuschange'));");
+        t.on("focus", d), t.on("blur", d);
+        let c = () => u.executeJavaScript("window.dispatchEvent(new Event('fullscreenchange'));");
+        t.on("enter-full-screen", c), t.on("leave-full-screen", c)
+    }
+
+    function We(t) {
+        if (t.isSecured) return;
+        t.isSecured = !0, t.setWindowOpenHandler(u => {
+            if (u.url === "about:blank" && u.features && u.features.startsWith("popup")) {
+                let d = u.features.split(","),
+                    c = {},
+                    w = "";
+                for (let y of d) {
+                    let [e, n] = y.split("=");
+                    (e === "x" || e === "y" || e === "width" || e === "height") && (c[e] = parseInt(n)), e === "background" && (w = n)
+                }
+                return {
+                    action: "allow",
+                    overrideBrowserWindowOptions: {
+                        trafficLightPosition: {
+                            x: 19,
+                            y: 12
+                        },
+                        autoHideMenuBar: !0,
+                        frame: ye,
+                        titleBarStyle: Oe,
+                        ...Ve(c),
+                        webPreferences: {
+                            contextIsolation: !1,
+                            nodeIntegration: !0,
+                            nodeIntegrationInWorker: !0,
+                            spellcheck: !0,
+                            webviewTag: !0,
+                            affinity: "main-window"
+                        },
+                        show: !1,
+                        backgroundColor: w
+                    }
+                }
+            }
+            try {
+                let {
+                    url: d,
+                    disposition: c,
+                    frameName: w
+                } = u;
+                ce(s.BrowserWindow.fromWebContents(t), d, c, w)
+            } catch (d) {
+                console.error(d)
+            }
+            return {
+                action: "deny"
+            }
+        }), t.on("will-attach-webview", (u, d) => {
+            delete d.preload, delete d.preloadURL, d.sandbox = !0, d.nodeIntegration = !1, d.nodeIntegrationInWorker = !1, d.nodeIntegrationInSubFrames = !1, d.webSecurity = !0, d.plugins = !1, d.experimentalFeatures = !1, d.webviewTag = !1
+        });
+        let r = !0;
+        t.on("did-attach-webview", (u, d) => {
+            d.setWindowOpenHandler(c => {
+                let {
+                    url: w,
+                    disposition: y,
+                    frameName: e
+                } = c;
+                if (y === "foreground-tab") {
+                    if (!r) return {
+                        action: "deny"
+                    };
+                    r = !1
+                }
+                if (/^https?:\/\//.test(w)) try {
+                    ce(s.BrowserWindow.fromWebContents(d), w, y, e)
+                } catch (n) {
+                    console.error(n)
+                }
+                return {
+                    action: "deny"
+                }
+            }), d.on("will-navigate", (c, w) => {
+                /^https?:\/\//.test(w) || c.preventDefault()
+            }), d.on("will-frame-navigate", c => {
+                /^https?:\/\//.test(c.url) || c.preventDefault()
+            }), d.on("will-attach-webview", c => {
+                c.preventDefault()
+            }), d.on("did-navigate", () => {
+                r = !0
+            })
+        })
+    }
+
+    function Ve(t) {
+        let r = {
+            width: 800,
+            height: 600
+        };
+        se(() => {
+            let d = s.screen.getPrimaryDisplay().workArea;
+            r.width = Math.min(1024, d.width), r.height = Math.min(800, d.height - 1)
+        });
+        let u = !1;
+        if (t.x !== void 0 && t.y !== void 0 && t.width !== void 0 && t.height !== void 0) try {
+            for (let d of s.screen.getAllDisplays()) {
+                let c = d.workArea;
+                if (t.x < c.x + c.width - 2 && t.x + t.width > c.x + 2 && t.y < c.y + c.height - 2 && t.y + t.height > c.y + 2) {
+                    u = !0;
+                    break
+                }
+            }
+        } catch (d) {
+            console.error(d)
+        } else t.x === void 0 && t.y === void 0 && t.width !== void 0 && t.height !== void 0 && (u = !0);
+        return u && (r.x = t.x, r.y = t.y, r.width = t.width, r.height = t.height), r.width < 300 && (r.width = 300), r.height < 200 && (r.height = 200), r
+    }
+    let dt = S.join(K, "Obsidian Vault"),
+        $e = S.join(M, "Obsidian Sandbox"),
+        ht = S.join(M, "Obsidian Help"),
+        Ue = "app",
+        ve = Ue + "://",
+        ee = ve + "obsidian.md/",
+        Ee = ve + Re(36) + "/",
+        Ne = ee + "index.html",
+        je = ["https://easylist.to/easylist/easylist.txt", "https://easylist.to/easylist/easyprivacy.txt"],
+        qe = 4,
+        _e = ["clipboard-read", "clipboard-sanitized-write"],
+        x = N("obsidian");
+    (!x || typeof x != "object") && (x = {});
+    let I = x.vaults || {};
+    pt();
+    for (let t in I) {
+        let r = I[t];
+        r.path = S.resolve(r.path), (!r.path || r.path === ht || !m.existsSync(r.path)) && (delete I[t], R(t))
+    }
+    x.vaults = I, x.insider && i.emit("insider", !0);
+    let ye = x.frame === "native",
+        Oe = ye ? "default" : "hidden";
+    if (x.updateDisabled && (i.emit("disable", !0), console.log("Updates disabled.")), x.disableGpu && !s.app.isReady()) try {
+        s.app.disableHardwareAcceleration(), console.log("GPU Acceleration disabled.")
+    } catch (t) {
+        console.error(t)
+    }
+    let Z;
+    x.icon && m.existsSync(S.join(M, x.icon)) && (Z = S.join(M, x.icon)), !Z && a && (Z = S.join(h, "icon-dev.png"));
+
+    function j() {
+        be("obsidian", x)
+    }
+
+    function He(t, r) {
+        let u = I[t];
+        u && (r ? u.open = !0 : delete u.open, j())
+    }
+    async function pt() {
+        let t = S.join(M, "Partitions");
+        try {
+            let r = await m.promises.readdir(t);
+            if (!r) return;
+            for (let u of r) {
+                let d = u.replace(/^vault-/, "");
+                I[d] || await Ke(d)
+            }
+        } catch (r) {
+            r.code !== "ENOENT" && console.error("ERROR: " + r)
+        }
+    }
+    async function Ke(t) {
+        console.log("Removing partition for vault " + t);
+        let r = S.join(M, "Partitions", `vault-${t}`);
+        return m.promises.rm(r, {
+            recursive: !0,
+            force: !0
+        })
+    }
+    let _ = {},
+        Be = new WeakMap,
+        we = !1,
+        xe = null,
+        De = Je([], !0);
+
+    function he(t) {
+        if (!t) return De;
+        for (; !t.appMenu && Be.has(t);) t = Be.get(t);
+        return t.appMenu || De
+    }
+
+    function Ce() {
+        let t = s.BrowserWindow.getFocusedWindow();
+        if (!t || !U) return;
+        let r = he(t);
+        s.Menu.setApplicationMenu(r)
+    }
+
+    function ze(t) {
+        return !t.triggeredByAccelerator || !t.shiftKey && !t.ctrlKey && !t.metaKey && !t.altKey
+    }
+
+    function Je(t, r = !1) {
+        let u = [];
+        for (let y = t.length - 1; y >= 0; y--) {
+            let e = t[y];
+            (e.label === "&Window" || e.label === "&Help") && (u.push(e), t.splice(y, 1))
+        }
+
+        function d(y) {
+            y.forEach(e => {
+                if (e.appCommand) {
+                    let n = e.appCommand;
+                    e.id = n, e.click = (o, l, p) => {
+                        if (l instanceof s.BrowserWindow) {
+                            if (!l) {
+                                let C = Se();
+                                if (C)
+                                    if (l = _[C], l && l.isMinimized()) l.restore();
+                                    else return
+                            }
+                            l && ze(p) && l.webContents.executeJavaScript(`app.commands.executeCommandById(${JSON.stringify(n)})`)
+                        }
+                    }, delete e.appCommand
+                }
+                "submenu" in e && d(e.submenu)
+            })
+        }
+
+        function c(y) {
+            let e = [];
+            for (let n of y) {
+                let o = e.find(l => l.id && l.id === n.id || l.label === n.label);
+                if (o)
+                    for (let l of n.submenu) {
+                        let p = l.before && o.submenu.findIndex(C => C.id === l.before[0]);
+                        p != null ? o.submenu.splice(p, 0, l) : o.submenu.push(l)
+                    } else e.push(n)
+            }
+            return e
+        }
+        let w = c([...re(U, () => [{
+            label: "Obsidian",
+            submenu: [{
+                label: "About Obsidian",
+                async click(y, e) {
+                    let n = `Version ${J} (Installer ${s.app.getVersion()})`;
+                    (await s.dialog.showMessageBox(e, {
+                        message: "Obsidian",
+                        icon: S.join(h, "icon.png"),
+                        detail: `${n}
+
+Copyright \xA9 Dynalist Inc.`,
+                        type: "info",
+                        buttons: ["OK", "Copy"],
+                        defaultId: 0,
+                        cancelId: 0
+                    })).response === 1 && s.clipboard.writeText(`About Obsidian
+${n}`)
+                }
+            }, {
+                type: "separator"
+            }, {
+                id: "preferences-section",
+                visible: !1,
+                label: ""
+            }, {
+                type: "separator"
+            }, {
+                role: "services"
+            }, {
+                type: "separator"
+            }, {
+                label: "Hide Obsidian",
+                click: () => s.app.hide(),
+                accelerator: "Cmd+H"
+            }, {
+                role: "hideOthers"
+            }, {
+                role: "unhide"
+            }, {
+                type: "separator"
+            }, {
+                label: "Quit Obsidian",
+                click: () => s.app.quit(),
+                accelerator: "Cmd+Q"
+            }]
+        }]), {
+            label: "&File",
+            submenu: [{
+                id: "open-section",
+                type: "separator"
+            }, {
+                id: "open-vault",
+                click: pe,
+                label: "Open Vault..."
+            }, ...re(U || Y, () => [{
+                role: "recentDocuments",
+                submenu: [{
+                    label: "Clear Recent",
+                    role: "clearRecentDocuments"
+                }]
+            }]), {
+                type: "separator"
+            }, ...re(r, () => [{
+                id: "close-window",
+                role: "close"
+            }]), ...re(!U, () => [{
+                type: "separator"
+            }, {
+                id: "quit",
+                role: "quit"
+            }])]
+        }, {
+            label: "&Edit",
+            submenu: [{
+                type: "separator",
+                id: "undo-section"
+            }, {
+                role: "undo"
+            }, {
+                label: "Redo",
+                accelerator: "CmdOrCtrl+Shift+Z",
+                click: function(y, e, n) {
+                    if (e instanceof s.BrowserWindow)
+                        if (ze(n)) {
+                            let o = U ? "metaKey" : "ctrlKey";
+                            e.webContents.executeJavaScript(`
+									activeDocument.activeElement.dispatchEvent(new KeyboardEvent('keydown', {
+										keyCode: 90,
+										which: 90,
+										code: 'KeyZ',
+										key: 'z',
+										${o}: true,
+										shiftKey: true,
+										bubbles: true,
+										cancelable: true,
+									}));
+								`)
+                        } else e.webContents.redo()
+                }
+            }, {
+                type: "separator",
+                id: "copy-section"
+            }, {
+                role: "cut"
+            }, {
+                role: "copy"
+            }, {
+                role: "paste"
+            }, {
+                role: "pasteAndMatchStyle",
+                accelerator: U ? "Cmd+Shift+V" : "Shift+CommandOrControl+V"
+            }, {
+                label: "Paste and Match Style",
+                accelerator: U ? "Cmd+Option+Shift+V" : "Shift+CommandOrControl+Alt+V",
+                click: (y, e) => {
+                    e instanceof s.BrowserWindow && e.webContents.pasteAndMatchStyle()
+                },
+                visible: !1
+            }, {
+                role: "delete"
+            }, {
+                role: "selectAll"
+            }, ...re(U, () => [{
+                type: "separator",
+                id: "speech-section"
+            }, {
+                label: "Substitutions",
+                submenu: [{
+                    role: "showSubstitutions"
+                }, {
+                    type: "separator"
+                }, {
+                    role: "toggleSmartQuotes"
+                }, {
+                    role: "toggleSmartDashes"
+                }, {
+                    role: "toggleTextReplacement"
+                }]
+            }, {
+                label: "Speech",
+                submenu: [{
+                    role: "startSpeaking"
+                }, {
+                    role: "stopSpeaking"
+                }]
+            }])]
+        }, ...t, {
+            label: "&View",
+            submenu: [...re(a, () => [{
+                role: "reload"
+            }]), {
+                id: "actual-size",
+                label: "Actual Size",
+                accelerator: "CommandOrControl+0",
+                click(y, e) {
+                    e && e instanceof s.BrowserWindow && (e.webContents.zoomLevel = 0)
+                }
+            }, {
+                label: "Zoom In",
+                accelerator: "CommandOrControl+=",
+                click(y, e) {
+                    e && e instanceof s.BrowserWindow && e.webContents.executeJavaScript(`
+									(() => {
+										let wf = require('electron').webFrame;
+										let zoom = wf.getZoomLevel();
+										if (zoom < 3) {
+											wf.setZoomLevel(zoom + 0.5);
+										}
+									})()
+								`)
+                }
+            }, {
+                label: "Zoom Out",
+                accelerator: "CommandOrControl+-",
+                click(y, e) {
+                    e && e instanceof s.BrowserWindow && e.webContents.executeJavaScript(`
+									(() => {
+										let wf = require('electron').webFrame;
+										let zoom = wf.getZoomLevel();
+										if (zoom > -2.5) {
+											wf.setZoomLevel(zoom - 0.5);
+										}
+									})()
+								`)
+                }
+            }, {
+                id: "developer-section",
+                type: "separator"
+            }, {
+                role: "forceReload",
+                accelerator: ""
+            }, {
+                role: "toggleDevTools"
+            }, {
+                type: "separator"
+            }, {
+                role: "togglefullscreen"
+            }]
+        }, {
+            label: "&Window",
+            role: "window",
+            submenu: [{
+                role: "minimize",
+                accelerator: U ? "CommandOrControl+M" : ""
+            }, ...re(U, () => [{
+                role: "zoom"
+            }]), {
+                type: "separator"
+            }, {
+                type: "separator",
+                id: "tab-management"
+            }, {
+                id: "window-always-on-top",
+                checked: !1,
+                enabled: !1,
+                type: "checkbox",
+                label: "Always on Top",
+                click(y, e) {
+                    if (e) {
+                        let n = e.isAlwaysOnTop();
+                        e.setAlwaysOnTop(!n)
+                    }
+                }
+            }, {
+                role: "front"
+            }]
+        }, {
+            label: "&Help",
+            role: "help",
+            submenu: [{
+                label: "Open Help",
+                click: () => Ge()
+            }, {
+                type: "separator",
+                id: "help-links"
+            }, {
+                label: "Homepage",
+                click: () => s.shell.openExternal("https://obsidian.md")
+            }, {
+                label: "Community",
+                click: () => s.shell.openExternal("https://obsidian.md/community")
+            }, {
+                label: "Help Center",
+                click: () => s.shell.openExternal("https://help.obsidian.md/")
+            }, {
+                type: "separator"
+            }]
+        }, ...u]);
+        return d(w), s.Menu.buildFromTemplate(w)
+    }
+
+    function Se() {
+        let t = null,
+            r = null;
+        for (let u in _) {
+            let d = _[u];
+            d.isDestroyed() || (!t || d.focusTime > t.focusTime) && (t = d, r = u)
+        }
+        return r
+    }
+
+    function Pe(t) {
+        for (let r in I) {
+            let u = I[r].path;
+            if (r === t || S.basename(u).toUpperCase() === t.toUpperCase()) return r
+        }
+        return null
+    }
+
+    function gt(t) {
+        return I[t] ? S.basename(I[t].path) : null
+    }
+
+    function mt(t) {
+        let r = S.resolve(t);
+        for (let u in I) {
+            let d = S.resolve(I[u].path);
+            if (r === d || r.startsWith(d + S.sep)) return u
+        }
+        return null
+    }
+
+    function le(t, r = !0) {
+        if (_[t]) {
+            let f = _[t];
+            return r && (f.isMinimized() && f.restore(), f.focus()), f
+        }
+        let u = N(t),
+            d = {
+                width: 800,
+                height: 600,
+                minWidth: 200,
+                minHeight: 150,
+                backgroundColor: "#00000000",
+                trafficLightPosition: {
+                    x: 19,
+                    y: 12
+                },
+                show: !1,
+                frame: ye,
+                titleBarStyle: Oe,
+                webPreferences: {
+                    contextIsolation: !1,
+                    nodeIntegration: !0,
+                    nodeIntegrationInWorker: !0,
+                    spellcheck: !0,
+                    webviewTag: !0
+                },
+                ...Ve(u)
+            },
+            c = new s.BrowserWindow(d);
+        _[t] = c;
+        let w = c.webContents,
+            y = !1,
+            e = () => {
+                if (y) return;
+                y = !0, u.isMaximized && c.maximize(), u.devTools && w.openDevTools(), c.show();
+                let f = u.zoom;
+                f && typeof f == "number" && w.executeJavaScript(`require('electron').webFrame.setZoomLevel(${u.zoom})`)
+            };
+        c.menuBarVisible = !1, Z && !U && se(() => c.setIcon(Z));
+
+        function n() {
+            return !c.isMaximized() && !c.isMinimized() && !c.isFullScreen()
+        }
+
+        function o() {
+            try {
+                let f = c.getBounds();
+                n() && (u.x = f.x, u.y = f.y, u.width = f.width, u.height = f.height), u.isMaximized = c.isMaximized(), u.devTools = w.isDevToolsOpened(), u.zoom = w.zoomLevel
+            } catch (f) {}
+        }
+        w.on("did-finish-load", () => {
+            c.loaded = !0
+        }), ke(c, !0);
+        let l = f => {
+            f.on("context-menu", (A, E) => {
+                if (xe && xe === w.id) {
+                    xe = null;
+                    try {
+                        let {
+                            editFlags: W,
+                            misspelledWord: H,
+                            dictionarySuggestions: ne
+                        } = E;
+                        w.send("context-menu", {
+                            editFlags: W,
+                            misspelledWord: H,
+                            dictionarySuggestions: ne,
+                            webContentsId: f.id
+                        });
+                        return
+                    } catch (W) {
+                        console.error(W)
+                    }
+                }
+                at(c, f, E)
+            })
+        };
+        l(w), c.on("close", f => {
+            o(), be(t, u), setTimeout(() => {
+                !f.defaultPrevented && !c.isDestroyed() && c.destroy()
+            }, 3e3)
+        }), c.on("closed", () => {
+            delete _[t], !we && (ie || Object.keys(_).length > 0) && He(t, !1)
+        });
+        let p;
+
+        function C() {
+            clearTimeout(p), p = setTimeout(o, 100)
+        }
+        return c.on("resize", C), c.on("move", C), c.on("ready-to-show", e), w.on("did-create-window", f => {
+            let A = f.webContents;
+            Be.set(f, c), Z && !U && se(() => f.setIcon(Z)), ke(f, !1), l(A)
+        }), c.loadURL(Ne).then(e, e), He(t, !0), c
+    }
+
+    function Qe(t) {
+        let r = new s.BrowserWindow({
+            width: 800,
+            height: 600,
+            resizable: !1,
+            maximizable: !1,
+            fullscreenable: !1,
+            show: !1,
+            frame: ye,
+            titleBarStyle: Oe,
+            backgroundColor: "#1e1e1e",
+            webPreferences: {
+                contextIsolation: !1,
+                nodeIntegration: !0
+            },
+            ...t
+        });
+        return Z && !U && se(() => r.setIcon(Z)), ae(r.webContents), r.menuBarVisible = !1, r.on("focus", () => {
+            Ce()
+        }), r
+    }
+    let ie;
+
+    function pe() {
+        if (ie) {
+            ie.isMinimized() && ie.restore(), ie.focus();
+            return
+        }
+        let t = ie = Qe({
+            width: 800,
+            height: 650
+        });
+        t.on("closed", () => {
+            ie = null
+        });
+        let r = () => t.show();
+        t.loadURL(ee + "starter.html").then(r, r)
+    }
+    let fe;
+
+    function Ge() {
+        if (fe) {
+            fe.isMinimized() && fe.restore(), fe.focus();
+            return
+        }
+        let t = fe = Qe({
+            width: 600,
+            height: 680
+        });
+        t.on("closed", () => {
+            fe = null
+        });
+        let r = () => t.show();
+        t.loadURL(ee + "help.html").then(r, r)
+    }
+    let Fe = null;
+    s.app.on("will-finish-launching", () => {
+        s.app.once("open-url", (t, r) => {
+            t.preventDefault(), Fe = r
+        })
+    });
+    let Ie = () => {
+        for (let t in I) I[t].open && le(t);
+        Object.keys(_).length === 0 && pe()
+    };
+
+    function Le(t, r, u) {
+        let d = t.getMenuItemById(r);
+        if (d)
+            for (let c in u) d[c] = u[c]
+    }
+    async function Ze(t, r) {
+        if (!x.cli) return "Command line interface is not enabled. Please turn it on in Settings > General > Advanced.";
+        if (!t || !I[t]) return "No vault found.";
+        let u = le(t, !1);
+        try {
+            return await u.webContents.executeJavaScript(`
+				new Promise((resolve, reject) => {
+					let argv = ${JSON.stringify(r)};
+					if (window.handleCli) {
+						Promise.resolve(window.handleCli(argv)).then(resolve, reject);
+					} else {
+						window.cliQueue = window.cliQueue || [];
+						window.cliQueue.push({ argv, resolve, reject });
+					}
+				})
+			`)
+        } catch (d) {
+            return typeof d == "string" ? "Error: " + d : String(d)
+        }
+    }
+    s.app.on("second-instance", async (t, r, u, d) => {
+        if (!d) return;
+        let {
+            argv: c,
+            endpoint: w,
+            tty: y
+        } = JSON.parse(d.data);
+        if (!c || !w) return;
+        console.log("Received command line", c);
+        let e = Date.now() + 2e3,
+            n = await new Promise(f => {
+                let A = () => {
+                    let E = (0, Ae.createConnection)(w);
+                    E.setNoDelay(!0), E.once("connect", () => {
+                        f(E)
+                    }), E.once("error", W => {
+                        if (E.destroy(), Date.now() > e) {
+                            console.error("Failed to process command line call, timed out."), f(null);
+                            return
+                        }
+                        setTimeout(A, 10)
+                    })
+                };
+                A()
+            });
+        if (!n) return;
+        let o = f => {
+            f = f.replace(/(\r?\n)/g, te.EOL), n.write(f), f.endsWith(te.EOL) || n.write(te.EOL)
+        };
+        if (!x.cli) return o("Command line interface is not enabled. Please turn it on in Settings > General > Advanced."), n.end();
+        let l = c.find(f => f.startsWith("vault=")),
+            p = l ? Pe(l.slice(6)) : mt(u) || Se() || "";
+        if (!(y && c.every(f => f.startsWith("vault=")))) {
+            let f = c.at(-1);
+            if (f && f.startsWith("obsidian://")) return Te(f), o("Processed URI " + f), n.end();
+            let A = await Ze(p, c);
+            return A && o(A), n.end()
+        }
+        st(n, p, {
+            executeCliRequest: Ze,
+            getIdForVault: Pe,
+            getNameForVault: gt,
+            openVaultById: le,
+            version: J
+        })
+    }), s.app.whenReady().then(() => {
+        let t = e => {
+            let n = !1;
+            return e.indexOf("?") > 0 && (e = e.substring(0, e.indexOf("?"))), e.indexOf("#") > 0 && (e = e.substring(0, e.indexOf("#"))), e.indexOf(ee) === 0 ? (e = decodeURIComponent(e.substring(ee.length)), e = S.resolve(S.join(h, e)), e.indexOf(S.resolve(h)) !== 0 && (e = ""), n = !0) : e.indexOf(Ee) === 0 ? (e = decodeURIComponent(e.substring(Ee.length)), Y || (e = "/" + e), e = S.resolve(e), ot(e) && (n = !0)) : e = "", {
+                url: e,
+                noframe: n
+            }
+        };
+        s.protocol.registerFileProtocol ? s.protocol.registerFileProtocol("app", (e, n) => {
+            let {
+                url: o,
+                noframe: l
+            } = t(e.url), p = {};
+            l && (p["X-Frame-Options"] = "DENY"), n({
+                path: o,
+                headers: p
+            })
+        }) : s.protocol.handle("app", async e => {
+            let {
+                url: n,
+                noframe: o
+            } = t(e.url);
+            if (!n) return new Response("Not Found", {
+                status: 400
+            });
+            try {
+                let l = await m.promises.stat(n),
+                    p = 200,
+                    C, f = new Headers,
+                    A = e.headers.get("Range");
+                if (A) {
+                    let E = A.match(/^bytes=(\d*)-(\d*)/);
+                    if (!E) return new Response("Range Not Satisfiable", {
+                        status: 416
+                    });
+                    let W = Number(E[1] || 0),
+                        H = Number(E[2] || l.size - 1);
+                    if (isNaN(W) || isNaN(H) || W < 0 || H > l.size - 1 || H < W) return new Response("Range Not Satisfiable", {
+                        status: 416
+                    });
+                    f.set("Accept-Ranges", "bytes"), f.set("Content-Length", `${H-W+1}`), f.set("Content-Range", `bytes ${W}-${H}/${l.size}`), p = 206, C = m.createReadStream(n, {
+                        start: W,
+                        end: H
+                    })
+                } else f.set("Content-Length", `${l.size}`), C = m.createReadStream(n);
+                return f.set("Access-Control-Allow-Origin", "*"), f.set("Last-Modified", l.mtime.toUTCString()), o && f.set("X-Frame-Options", "DENY"), new Response(C, {
+                    status: p,
+                    headers: f
+                })
+            } catch (l) {
+                return console.error(l), new Response("Not Found", {
+                    status: 400
+                })
+            }
+        }), s.ipcMain.on("is-dev", e => {
+            e.returnValue = a
+        }), s.ipcMain.on("is-quitting", e => {
+            e.returnValue = we
+        }), s.ipcMain.on("desktop-dir", e => {
+            e.returnValue = Q
+        }), s.ipcMain.on("documents-dir", e => {
+            e.returnValue = K
+        }), s.ipcMain.on("resources", e => {
+            e.returnValue = h
+        }), s.ipcMain.on("version", e => {
+            e.returnValue = J
+        }), s.ipcMain.on("file-url", e => {
+            e.returnValue = Ee
+        }), s.ipcMain.on("relaunch", e => {
+            e.returnValue = "", console.log("Relaunching!"), we = !0, s.app.relaunch(), s.app.quit()
+        }), s.ipcMain.on("update", e => {
+            e.returnValue = T
+        }), s.ipcMain.on("check-update", (e, n) => {
+            n && (x.updateDisabled && i.emit("disable", !1), i.emit("check"), x.updateDisabled && setTimeout(() => i.emit("disable", !0), 50)), e.returnValue = P
+        }), s.ipcMain.on("disable-update", (e, n) => {
+            n === !0 ? (x.updateDisabled = !0, i.emit("disable", !0), j(), console.log("Updates disabled.")) : n === !1 && (delete x.updateDisabled, i.emit("disable", !1), j(), console.log("Updates enabled.")), e.returnValue = x.updateDisabled
+        }), s.ipcMain.on("copy-asar", (e, n) => {
+            try {
+                let o = S.basename(n),
+                    l = /^obsidian-(\d+\.\d+\.\d+)/.exec(o),
+                    p = S.join(M, `${l[0]}.asar`);
+                ut.copyFileSync(n, p), e.returnValue = !0
+            } catch (o) {
+                console.error("Failed to copy asar", o), e.returnValue = !1
+            }
+        }), s.ipcMain.on("disable-gpu", (e, n) => {
+            n === !0 ? (x.disableGpu = !0, j()) : n === !1 && (delete x.disableGpu, j()), e.returnValue = x.disableGpu
+        }), s.ipcMain.on("insider-build", (e, n) => {
+            n === !0 && !x.insider ? (x.insider = !0, i.emit("insider", !0), j()) : n === !1 && x.insider && (delete x.insider, i.emit("insider", !1), j()), e.returnValue = !!x.insider
+        }), s.ipcMain.on("cli", (e, n) => {
+            n === !0 && !x.cli ? (x.cli = !0, i.emit("cli", !0), j()) : n === !1 && x.cli && (delete x.cli, i.emit("cli", !1), j()), e.returnValue = !!x.cli
+        }), s.ipcMain.on("frame", (e, n) => {
+            typeof n == "string" && (x.frame = n, n || delete x.frame, j()), e.returnValue = x.frame
+        }), s.ipcMain.on("adblock-lists", (e, n) => {
+            Array.isArray(n) && (x.adblock = n, j(), V()), e.returnValue = x.adblock || je
+        }), s.ipcMain.on("adblock-frequency", (e, n) => {
+            typeof n == "number" && (x.adblockFrequency = n, j(), V()), e.returnValue = x.adblockFrequency || qe
+        }), s.ipcMain.on("print-to-pdf", async (e, n) => {
+            console.log("Saving PDF...");
+            let o = e.sender;
+            try {
+                let {
+                    filepath: l
+                } = n, p = await o.printToPDF(n);
+                await m.promises.writeFile(l, p), n.open && q(l)
+            } finally {
+                console.log("Done."), o.send("print-to-pdf", {})
+            }
+        }), s.ipcMain.on("vault", e => {
+            for (let n in _)
+                if (_[n].webContents === e.sender) {
+                    e.returnValue = {
+                        id: n,
+                        path: S.resolve(I[n].path)
+                    };
+                    return
+                } e.returnValue = {}
+        }), s.ipcMain.on("vault-list", e => {
+            e.returnValue = I
+        }), s.ipcMain.on("vault-remove", (e, n) => {
+            if (n && typeof n == "string") {
+                for (let o in I)
+                    if (I[o].path === n) {
+                        if (_[o]) {
+                            e.returnValue = !1;
+                            return
+                        }
+                        e.returnValue = !0, delete I[o], j(), R(o), Ke(o);
+                        return
+                    }
+            }
+            e.returnValue = !1
+        }), s.ipcMain.on("vault-move", (e, n, o) => {
+            if (n && typeof n == "string")
+                for (let l in I) {
+                    let p = I[l];
+                    if (p.path === n) {
+                        if (_[l]) {
+                            e.returnValue = "EVAULTOPEN";
+                            return
+                        }
+                        try {
+                            m.renameSync(n, o)
+                        } catch (C) {
+                            e.returnValue = C.toString();
+                            return
+                        }
+                        e.returnValue = "", p.path = o, j();
+                        return
+                    }
+                }
+            e.returnValue = !1
+        }), s.ipcMain.on("vault-open", (e, n, o) => {
+            if (o) {
+                if (m.existsSync(n)) {
+                    e.returnValue = "Vault already exists";
+                    return
+                }
+                try {
+                    m.mkdirSync(n, {
+                        recursive: !0
+                    })
+                } catch (l) {
+                    e.returnValue = l.toString();
+                    return
+                }
+            }
+            e.returnValue = d(n)
+        }), s.ipcMain.on("vault-message", (e, n, o) => {
+            n = S.resolve(n);
+            for (let l in I)
+                if (I[l].path === n) {
+                    Xe(l, o);
+                    break
+                } e.returnValue = ""
+        }), s.ipcMain.on("starter", e => {
+            e.returnValue = null, pe()
+        }), s.ipcMain.on("help", e => {
+            e.returnValue = null, Ge()
+        }), s.ipcMain.on("sandbox", e => {
+            e.returnValue = null, c()
+        }), s.ipcMain.on("context-menu", e => {
+            xe = e.sender.id
+        }), s.ipcMain.on("request-url", async (e, n, o) => {
+            try {
+                let {
+                    url: l,
+                    method: p,
+                    contentType: C,
+                    body: f,
+                    headers: A
+                } = o, E = s.net.request({
+                    url: l,
+                    method: p,
+                    redirect: "follow"
+                });
+                if (C && E.setHeader("Content-Type", C), A)
+                    for (let W in A) try {
+                        E.setHeader(W, A[W])
+                    } catch (H) {
+                        console.error(H)
+                    }
+                E.on("login", (W, H) => H()), E.on("error", W => {
+                    e.reply(n, {
+                        error: W
+                    })
+                }), E.on("response", W => {
+                    let H = [];
+                    W.on("data", ne => H.push(ne)), W.on("end", () => {
+                        let ne = Buffer.concat(H),
+                            bt = ne.buffer.slice(ne.byteOffset, ne.byteOffset + ne.byteLength);
+                        e.reply(n, {
+                            status: W.statusCode,
+                            headers: W.headers,
+                            body: bt
+                        })
+                    })
+                }), typeof f == "string" ? E.write(f) : f instanceof ArrayBuffer && E.write(Buffer.from(new Uint8Array(f))), E.end()
+            } catch (l) {
+                e.reply(n, {
+                    error: l
+                })
+            }
+        }), s.ipcMain.on("open-url", (e, n) => {
+            let o = s.BrowserWindow.fromWebContents(e.sender);
+            o && typeof n == "string" && ce(o, n)
+        }), s.ipcMain.on("trash", async (e, n) => {
+            try {
+                await s.shell.trashItem(n), e.returnValue = !0
+            } catch (o) {
+                console.log(o), e.returnValue = !1
+            }
+        }), s.ipcMain.on("get-documents-path", e => {
+            e.returnValue = K
+        }), s.ipcMain.on("get-sandbox-vault-path", e => {
+            e.returnValue = $e
+        }), s.ipcMain.on("get-default-vault-path", e => {
+            e.returnValue = dt
+        }), s.ipcMain.on("set-menu", (e, {
+            template: n
+        }) => {
+            let o = s.BrowserWindow.fromWebContents(e.sender);
+            if (!o) return;
+            let l = Je(n);
+            o.appMenu = l, U ? Ce() : o.setMenu(l)
+        }), s.ipcMain.on("update-menu-items", (e, n, o) => {
+            let l = s.BrowserWindow.fromWebContents(e.sender),
+                p = he(l);
+            if (p !== De) {
+                for (let {
+                        itemId: C,
+                        eState: f
+                    }
+                    of n) Le(p, C, f);
+                o && Ce()
+            }
+        }), s.ipcMain.on("render-menu", e => {
+            let n = s.BrowserWindow.fromWebContents(e.sender);
+            he(n).popup({
+                window: n
+            })
+        }), s.ipcMain.on("set-icon", (e, n, o) => {
+            x.icon && m.rmSync(S.join(M, x.icon), {
+                force: !0
+            }), n && o ? m.writeFileSync(S.join(M, n), o) : n = null, (x.icon || "") !== (n || "") && (n ? x.icon = n : delete x.icon, j()), e.returnValue = null
+        }), s.ipcMain.on("get-icon", e => {
+            e.returnValue = x.icon
+        }), s.ipcMain.on("create-browser-session", async (e, n, o) => {
+            let l = G[n];
+            l || (o === !0 && V(), l = {
+                session: s.session.fromPartition(n),
+                adblock: !!o
+            }, G[n] = l, l.session.setUserAgent(l.session.getUserAgent().split(" ").filter(p => !/^(obsidian|electron)/i.test(p)).join(" ")), l.session.webRequest.onBeforeRequest({
+                urls: ["https://*/*", "http://*/*"]
+            }, (p, C) => {
+                let f = l.adblock && X.matches(p.url);
+                C({
+                    cancel: f
+                })
+            }), l.session.webRequest.onBeforeSendHeaders({
+                urls: ["https://*/*", "http://*/*"]
+            }, (p, C) => {
+                let {
+                    requestHeaders: f
+                } = p;
+                for (let A in f) A.toLowerCase() === "sec-fetch-dest" || A.toLowerCase() === "sec-ch-ua" ? delete f[A] : A.toLowerCase() === "user-agent" && p.url.startsWith("https://accounts.google.com/") && (f[A] = "Chrome");
+                C({
+                    requestHeaders: f
+                })
+            }), l.session.setPermissionCheckHandler((p, C, f) => _e.includes(C)), l.session.setPermissionRequestHandler((p, C, f, A) => {
+                f(_e.includes(C))
+            }), l.session.setDevicePermissionHandler(p => !1)), (o === !0 || o === !1) && (l.adblock = o)
+        }), s.ipcMain.handle("register-cli", async e => {
+            if (!b) return {
+                success: !1,
+                message: `Unable to add to command line because the executable is "${g}" instead of "obsidian".`
+            };
+            try {
+                let n = (0, ft.promisify)(lt.exec),
+                    o = process.execPath,
+                    l = S.dirname(o);
+                if (Y) {
+                    let {
+                        stdout: p
+                    } = await n(`powershell -Command "[Environment]::GetEnvironmentVariable('Path', 'User')"`);
+                    return p.trim().split(";").some(f => f.trim().toLowerCase() === l.toLowerCase()) ? {
+                        success: !0,
+                        message: "Already registered in PATH"
+                    } : (await n(`powershell -Command "[Environment]::SetEnvironmentVariable('Path', ([Environment]::GetEnvironmentVariable('Path', 'User') + ';${l}'), 'User')"`), {
+                        success: !0,
+                        message: "Successfully registered to PATH. Please restart your terminal."
+                    })
+                } else if (U) {
+                    let p = S.join(te.homedir(), ".zprofile");
+                    return m.existsSync(p) && m.readFileSync(p, "utf8").includes(l) ? {
+                        success: !0,
+                        message: "Already registered in PATH"
+                    } : (m.appendFileSync(p, `
+# Added by Obsidian
+export PATH="$PATH:${l}"
+`), {
+                        success: !0,
+                        message: "Successfully registered to PATH. Please restart your terminal."
+                    })
+                } else {
+                    let p = process.env.APPIMAGE || o,
+                        C = "/usr/local/bin/obsidian";
+                    if (m.existsSync(C) && m.readlinkSync(C) === p) return {
+                        success: !0,
+                        message: "Already registered in PATH"
+                    };
+                    try {
+                        return m.existsSync(C) && await n(`sudo rm "${C}"`), await n(`sudo ln -s "${p}" "${C}"`), {
+                            success: !0,
+                            message: "Successfully registered to PATH"
+                        }
+                    } catch (f) {
+                        let A = S.join(te.homedir(), ".local", "bin");
+                        m.existsSync(A) || m.mkdirSync(A, {
+                            recursive: !0
+                        });
+                        let E = S.join(A, "obsidian");
+                        return m.existsSync(E) && m.unlinkSync(E), m.symlinkSync(p, E), {
+                            success: !0,
+                            message: `Successfully registered to ${A}. Make sure this directory is in your PATH.`
+                        }
+                    }
+                }
+            } catch (n) {
+                return {
+                    success: !1,
+                    message: n.toString()
+                }
+            }
+        });
+        let r = s.session.defaultSession.webRequest;
+        r.onBeforeRequest({
+            urls: [ve + "*/*"]
+        }, (e, n) => {
+            let {
+                frame: o,
+                url: l
+            } = e, p = o.origin, C = !0;
+            p + "/" === ee && (C = !1), p === "null" && o === o.top && l.startsWith(ee) && (C = !1), n({
+                cancel: C
+            })
+        }), r.onBeforeSendHeaders({
+            urls: ["https://*/*", "http://*/*"]
+        }, (e, n) => {
+            let {
+                requestHeaders: o
+            } = e;
+            if (e.url.startsWith("https://www.youtube.com/embed/") || e.url.startsWith("https://www.youtube-nocookie.com/embed/")) o.Referer || (o.Referer = "md.obsidian");
+            else
+                for (let l in o)(l.toLowerCase() === "sec-fetch-dest" || l.toLowerCase() === "sec-ch-ua") && delete o[l];
+            n({
+                requestHeaders: o
+            })
+        }), r.onHeadersReceived({
+            urls: ["https://*/*", "http://*/*"]
+        }, (e, n) => {
+            let {
+                responseHeaders: o,
+                resourceType: l,
+                frame: p,
+                webContents: C
+            } = e, f = l === "subFrame";
+            try {
+                if (!f) {
+                    let A = C.mainFrame;
+                    f = A.framesInSubtree.filter(E => E !== A).some(E => (E.routingId && E.routingId === p.routingId || E.frameToken && E.frameToken === p.frameToken) && E.processId === p.processId)
+                }
+            } catch (A) {}
+            for (let A in o) A.toLowerCase() === "x-frame-options" && delete o[A], A.toLowerCase() === "cross-origin-opener-policy" && delete o[A], A.toLowerCase() === "content-security-policy" && (o[A] = o[A].map(E => E.replace(/\s*frame-ancestors [^;]*(;|$)/g, ""))), A.toLowerCase() === "set-cookie" && f && (o[A] = o[A].map(E => /Secure;/i.test(E) ? E.replace(/SameSite=Lax/i, "SameSite=None") : E));
+            n({
+                responseHeaders: o
+            })
+        });
+        let u = () => !1;
+        r.onBeforeRequest = u, r.onBeforeSendHeaders = u, r.onHeadersReceived = u;
+        for (let e of [s.protocol, s.session.defaultSession.protocol]) e.interceptBufferProtocol = u, e.interceptStreamProtocol = u, e.interceptStringProtocol = u, e.interceptFileProtocol = u, e.interceptHttpProtocol = u, e.handle = u;
+        s.session.defaultSession.setPermissionRequestHandler((e, n, o, l) => {
+            let p = e.getURL().startsWith(ee);
+            l.isMainFrame && l.requestingUrl === "about:blank" && n.startsWith("clipboard-") && (p = !0), n === "openExternal" ? p = !1 : n === "fullscreen" && (p = !0), p || console.log("Blocked permission request", e.getURL(), n, l), o(p)
+        });
+
+        function d(e) {
+            if (e && typeof e == "string") {
+                if (e = S.resolve(e), !m.existsSync(e)) return "folder not found";
+                if (!oe(e)) return "no permission to access folder";
+                for (let o in I) {
+                    let l = I[o];
+                    if (l.path === e) return l.ts = Date.now(), le(o), s.app.addRecentDocument(e), !0
+                }
+                let n = Re(16);
+                return I[n] = {
+                    path: e,
+                    ts: Date.now()
+                }, le(n), s.app.addRecentDocument(e), !0
+            }
+            return "folder not found"
+        }
+
+        function c() {
+            let e = S.join(h, "sandbox"),
+                n = $e;
+            for (let o in _) {
+                let l = I[o];
+                if (l.path === n) {
+                    l.ts = Date.now(), le(o);
+                    return
+                }
+            }
+            try {
+                m.rmSync ? m.rmSync(n, {
+                    recursive: !0
+                }) : m.rmdirSync(n, {
+                    recursive: !0
+                })
+            } catch (o) {
+                o.code !== "ENOENT" && console.error(o)
+            }
+            w(e, n), d(n)
+        }
+
+        function w(e, n) {
+            m.mkdirSync(n, {
+                recursive: !0
+            });
+            let o = m.readdirSync(e);
+            for (let l of o) {
+                let p = S.join(e, l),
+                    C = m.statSync(p),
+                    f = n + "/" + l;
+                C.isFile() && m.writeFileSync(f, m.readFileSync(p)), C.isDirectory() && w(p, f)
+            }
+        }
+        s.app.setAboutPanelOptions({
+            applicationName: "Obsidian",
+            applicationVersion: J + " (installer " + s.app.getVersion() + ")",
+            version: "",
+            copyright: "Copyright \xA9 Dynalist Inc.",
+            website: "https://obsidian.md"
+        }), U && se(() => s.app.dock.setIcon(Z)), s.Menu.setApplicationMenu(De), s.app.on("web-contents-created", (e, n) => {
+            We(n), n.noContextMenu = !1, n.hostWebContents && n.on("context-menu", (o, l) => {
+                n.noContextMenu || at(s.BrowserWindow.fromWebContents(n), n, l)
+            })
+        }), s.app.on("open-file", function(e, n) {
+            e.preventDefault();
+            let o = S.resolve(n),
+                l = "";
+            for (let p in I) {
+                let C = I[p].path;
+                o.startsWith(C) && l.length < C.length && (l = C)
+            }
+            l && d(l)
+        }), s.app.on("window-all-closed", () => {
+            U || s.app.quit()
+        }), s.app.on("before-quit", () => {
+            we = !0
+        }), s.app.on("activate", () => {
+            s.BrowserWindow.getAllWindows().length === 0 && Ie()
+        });
+        let y = D.at(-1);
+        if (y && y.startsWith("obsidian://") && (Fe = y), Fe && Te(Fe), s.app.on("open-url", function(e, n) {
+                e.preventDefault(), Te(n)
+            }), !ie && Object.keys(_).length === 0) Ie();
+        else {
+            for (let e in I) _[e] || delete I[e].open;
+            j()
+        }
+    }), !a && !s.app.isDefaultProtocolClient("obsidian") && s.app.setAsDefaultProtocolClient("obsidian");
+    let Ye = "obsidian://";
+
+    function Te(t) {
+        if (!t.startsWith(Ye)) return;
+        let r = t;
+        console.log("Received callback URL", t), t = t.substr(Ye.length);
+        let u = {};
+        if (t.startsWith("/")) {
+            let y = t;
+            Y && (y = t.substr(1)), u.action = "open", u.path = decodeURI(y)
+        } else if (t.startsWith("sync-setup")) {
+            pe();
+            return
+        } else if (t.startsWith("choose-vault")) {
+            pe();
+            return
+        } else if (t.startsWith("vault/")) {
+            t = t.substr(6);
+            let y = t.split("/").map(e => decodeURIComponent(e));
+            u.action = "open", u.vault = y[0], u.file = y.slice(1).join("/")
+        } else {
+            let y = "",
+                e = "",
+                n = t.indexOf("?"),
+                o = t.indexOf("#", Math.max(0, n));
+            o >= 0 && (e = t.substr(o + 1), t = t.substr(0, o), u.hash = e), n >= 0 && (y = t.substr(n + 1), t = t.substr(0, n));
+            for (let l of y.split("&")) {
+                let p = l.split("="),
+                    C = "true";
+                p.length > 1 && (C = decodeURIComponent(p[1])), u[decodeURIComponent(p[0])] = C
+            }
+            u.action = t.replace(/\/+$/g, "")
+        }
+        let d = null,
+            c = u.path,
+            w = u.vault;
+        if (c && typeof c == "string") {
+            let y = S.resolve(c),
+                e = "";
+            for (let n in I) {
+                let o = I[n].path;
+                y.startsWith(o) && e.length < o.length && (e = o, d = n)
+            }
+            d && (u.file = y.substr(e.length))
+        } else w && typeof w == "string" ? d = Pe(w) : (d = Se(), d || Ie(), d = Se());
+        d ? Xe(d, u) : s.dialog.showErrorBox("Vault not found.", "Unable to find a vault for the URL " + r)
+    }
+
+    function Xe(t, r) {
+        let u = le(t, !1),
+            c = `(function(){var w=window,o=${JSON.stringify(r)};if(typeof w.OBS_ACT === "function"){w.OBS_ACT(o)}else{w.OBS_ACT=o}})()`,
+            w = u.webContents;
+        u.loaded ? w.executeJavaScript(c) : w.once("did-finish-load", () => w.executeJavaScript(c))
+    }
+};
