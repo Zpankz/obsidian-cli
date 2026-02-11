@@ -43,6 +43,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 require_vault
+check_python3
 
 OUT=$(ensure_output_dir "06-maintenance")
 

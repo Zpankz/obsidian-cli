@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# centrality-analysis.sh - Full centrality analysis via NetworkX
+# centrality-analysis.sh - Full centrality analysis (pure Python)
 # =============================================================================
 # Phase 5: Analysis (DeepGraph integration)
 #
-# Computes proper PageRank, betweenness centrality, and closeness centrality
-# using NetworkX graph algorithms. Produces ranked node lists and identifies
+# Computes PageRank, betweenness centrality, and closeness centrality
+# using pure Python implementations. Produces ranked node lists and identifies
 # structural roles (authorities, bridges, connectors).
 #
 # Usage:
@@ -15,7 +15,7 @@
 #   output/05-analysis/centrality-analysis.json  - Full centrality scores
 #   output/05-analysis/centrality-report.txt     - Human-readable ranking
 #
-# Requires: python3, networkx (pip install networkx)
+# Requires: python3 (no external deps - pure Python implementation)
 # =============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -32,6 +32,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 require_vault
+check_python3
 
 OUT=$(ensure_output_dir "05-analysis")
 

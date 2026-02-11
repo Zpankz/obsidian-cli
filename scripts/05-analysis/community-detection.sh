@@ -4,9 +4,9 @@
 # =============================================================================
 # Phase 5: Analysis (DeepGraph integration)
 #
-# Detects communities using greedy modularity optimization (Clauset-Newman-
-# Moore) and label propagation. Computes modularity score, identifies
-# inter-community bridges, and exports membership for visualization.
+# Detects communities using label propagation with modularity scoring.
+# Computes modularity (Q), identifies inter-community bridges, and
+# exports membership for visualization.
 #
 # Usage:
 #   ./community-detection.sh --vault <name> [--min-community <n>] [--output <dir>]
@@ -32,6 +32,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 require_vault
+check_python3
 
 OUT=$(ensure_output_dir "05-analysis")
 
