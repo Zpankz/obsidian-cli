@@ -1,0 +1,27 @@
+# Claude Code session data
+.claude/
+.letta/
+.omc/
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
