@@ -20,9 +20,12 @@
 #   2 | extraction     - Frontmatter export, outline extraction, metadata cache
 #   3 | relationships  - Adjacency export, backlink census, link classification
 #   4 | construction   - (Interactive - requires input files)
-#   5 | analysis       - Network metrics, hub/authority report, health report
-#   6 | maintenance    - Orphan linker, broken link fixer, deadend enricher
+#   5 | analysis       - Network metrics, hub/authority report, health report,
+#                        centrality analysis, community detection
+#   6 | maintenance    - Orphan linker, broken link fixer, deadend enricher,
+#                        missing link predictor
 #   7 | evolution      - (Interactive - requires parameters)
+#   8 | reporting      - Aggregate analysis into a vault note
 #
 # Options:
 #   --vault <name>     Obsidian vault name (required)
@@ -174,6 +177,8 @@ if should_run 5 analysis; then
     "$SCRIPT_DIR/05-analysis/network-metrics.sh" \
     "$SCRIPT_DIR/05-analysis/hub-authority-report.sh" \
     "$SCRIPT_DIR/05-analysis/graph-health-report.sh" \
+    "$SCRIPT_DIR/05-analysis/centrality-analysis.sh" \
+    "$SCRIPT_DIR/05-analysis/community-detection.sh" \
     || ((TOTAL_FAILURES++))
 fi
 
@@ -183,6 +188,7 @@ if should_run 6 maintenance; then
     "$SCRIPT_DIR/06-maintenance/orphan-linker.sh" \
     "$SCRIPT_DIR/06-maintenance/broken-link-fixer.sh" \
     "$SCRIPT_DIR/06-maintenance/deadend-enricher.sh" \
+    "$SCRIPT_DIR/06-maintenance/missing-link-predictor.sh" \
     || ((TOTAL_FAILURES++))
 fi
 
@@ -193,6 +199,14 @@ if should_run 7 evolution; then
   log warn "  note-decomposer.sh --file <path>"
   log warn "  small-world-optimizer.sh [--beta <float>]"
   log warn "  cluster-bridge-builder.sh [--auto-create]"
+  log warn "  semantic-linker.sh [--threshold <float>]"
+fi
+
+# Phase 8: Reporting
+if should_run 8 reporting; then
+  run_phase 8 "Reporting" \
+    "$SCRIPT_DIR/08-reporting/vault-report-generator.sh" \
+    || ((TOTAL_FAILURES++))
 fi
 
 # ---------------------------------------------------------------------------
