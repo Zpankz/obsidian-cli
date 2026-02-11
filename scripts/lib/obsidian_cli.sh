@@ -254,4 +254,26 @@ count_vault_files() {
   obs_cli "files ext=md total" | tr -d '[:space:]'
 }
 
+# ---------------------------------------------------------------------------
+# Dependency checks
+# ---------------------------------------------------------------------------
+# require_python_module <module_name> [pip_package_name]
+#   Checks that a Python module is importable. Dies with install instructions
+#   if not found.
+require_python_module() {
+  local module="$1"
+  local pip_name="${2:-$module}"
+  if ! python3 -c "import $module" 2>/dev/null; then
+    die "Python module '$module' not found. Install with: pip install $pip_name"
+  fi
+}
+
+# check_python3
+#   Verify python3 is available.
+check_python3() {
+  if ! command -v python3 &>/dev/null; then
+    die "python3 is required but not found in PATH."
+  fi
+}
+
 log info "obsidian_cli.sh loaded (vault=${VAULT:-<unset>})"

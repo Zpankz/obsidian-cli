@@ -27,15 +27,21 @@ scripts/
 ├── 05-analysis/                      # Phase 5: Graph analytics
 │   ├── network-metrics.sh           #   Degree distribution, density, clustering
 │   ├── hub-authority-report.sh      #   Hub/authority/bridge node ranking
-│   └── graph-health-report.sh       #   Orphans, deadends, health score
+│   ├── graph-health-report.sh       #   Orphans, deadends, health score
+│   ├── centrality-analysis.sh       #   PageRank, betweenness, closeness centrality
+│   └── community-detection.sh       #   Label propagation community detection
 ├── 06-maintenance/                   # Phase 6: Graph repair
 │   ├── orphan-linker.sh             #   Suggest links for orphan files
 │   ├── broken-link-fixer.sh         #   Detect broken links with fix suggestions
-│   └── deadend-enricher.sh          #   Add outgoing links to dead-end files
+│   ├── deadend-enricher.sh          #   Add outgoing links to dead-end files
+│   └── missing-link-predictor.sh    #   Predict missing links via common neighbors
 ├── 07-evolution/                     # Phase 7: Graph optimization
 │   ├── note-decomposer.sh           #   Split large notes into atomic notes
 │   ├── small-world-optimizer.sh     #   Watts-Strogatz small-world rewiring
-│   └── cluster-bridge-builder.sh    #   Create MOC bridge notes across clusters
+│   ├── cluster-bridge-builder.sh    #   Create MOC bridge notes across clusters
+│   └── semantic-linker.sh           #   Content-based similarity linking
+├── 08-reporting/                     # Phase 8: Report generation
+│   └── vault-report-generator.sh    #   Aggregate analysis into a vault note
 ├── orchestrator.sh                   # Master runner for pipeline execution
 └── README.md                         # This file
 ```
@@ -180,9 +186,15 @@ Computes network metrics. **Read-only.**
 
 # Comprehensive health score (0-100)
 ./scripts/05-analysis/graph-health-report.sh --vault distil
+
+# Full centrality analysis (PageRank, betweenness, closeness)
+./scripts/05-analysis/centrality-analysis.sh --vault distil --top 30
+
+# Community detection (label propagation + modularity)
+./scripts/05-analysis/community-detection.sh --vault distil --min-community 3
 ```
 
-**Outputs:** `network-metrics.json`, `hub-authority-report.json`, `graph-health.json` (with health score A-F)
+**Outputs:** `network-metrics.json`, `hub-authority-report.json`, `graph-health.json`, `centrality-analysis.json`, `centrality-report.txt`, `communities.json`, `community-report.txt`
 
 ### Phase 6: Maintenance
 
@@ -199,7 +211,12 @@ Identifies and suggests fixes for graph issues. **Read-only by default**, with o
 ./scripts/06-maintenance/deadend-enricher.sh --vault distil
 ```
 
-**Outputs:** `orphan-suggestions.json`, `broken-links.json`, `deadend-suggestions.json` + corresponding link maps ready for `link-injector.sh`
+```bash
+# Predict missing links from graph structure (common neighbors, Adamic-Adar)
+./scripts/06-maintenance/missing-link-predictor.sh --vault distil --threshold 3
+```
+
+**Outputs:** `orphan-suggestions.json`, `broken-links.json`, `deadend-suggestions.json`, `predicted-links.json`, `predicted-link-map.json` + corresponding link maps ready for `link-injector.sh`
 
 ### Phase 7: Graph Evolution
 
@@ -217,7 +234,26 @@ Structural optimization. **Write operations for `--auto-link` / `--auto-create`.
 # Create bridge notes between clusters
 ./scripts/07-evolution/cluster-bridge-builder.sh \
   --vault distil --min-cluster-size 10
+
+# Content-based similarity linking (Jaccard on tags, headings, links)
+./scripts/07-evolution/semantic-linker.sh \
+  --vault distil --threshold 0.15 --max-links 5
 ```
+
+### Phase 8: Reporting
+
+Aggregates analysis outputs into a comprehensive vault note. **Creates one note.**
+
+```bash
+# Generate report from all analysis outputs and create as vault note
+./scripts/08-reporting/vault-report-generator.sh --vault distil
+
+# Custom report location
+./scripts/08-reporting/vault-report-generator.sh --vault distil \
+  --note-path _reports --note-name "Monthly Graph Review"
+```
+
+**Outputs:** `vault-report.md` (local copy + vault note with wikilinks to top nodes)
 
 ## Pipeline Outputs
 
@@ -238,6 +274,11 @@ All outputs go to `./output/<phase>/` by default. Key files:
 | `orphan-suggestions.json` | 6 | Link suggestions for orphan files |
 | `broken-links.json` | 6 | Broken links with fuzzy-match fixes |
 | `small-world-analysis.json` | 7 | Small-world coefficient (σ), clustering |
+| `centrality-analysis.json` | 5 | PageRank, betweenness, closeness scores |
+| `communities.json` | 5 | Community assignments with modularity |
+| `predicted-links.json` | 6 | Missing link predictions (Adamic-Adar) |
+| `semantic-similarities.json` | 7 | Content-based similarity pairs |
+| `vault-report.md` | 8 | Aggregated analysis report (also a vault note) |
 
 ## CLI Commands Used
 
@@ -274,6 +315,7 @@ The scripts use these Obsidian CLI commands:
 - **Phase 4**: Creates notes and modifies files. Use `--dry-run` first.
 - **Phase 6**: Read-only by default. `--auto-link` writes to vault.
 - **Phase 7**: Read-only by default. `--auto-link`/`--auto-create` write to vault.
+- **Phase 8**: Creates one report note in the vault.
 - **Eval commands**: All eval calls are read-only (`app.vault.getFiles()`, `app.metadataCache.*`). No write operations are performed via eval.
 
 ## Extending
@@ -300,4 +342,18 @@ Scripts are designed to be chainable. Maintenance scripts produce link maps that
 ./scripts/05-analysis/network-metrics.sh --vault distil
 ./scripts/07-evolution/small-world-optimizer.sh --vault distil --auto-link
 ./scripts/05-analysis/network-metrics.sh --vault distil  # compare metrics
+
+# Predict missing links → inject them
+./scripts/06-maintenance/missing-link-predictor.sh --vault distil
+./scripts/04-graph-construction/link-injector.sh \
+  --vault distil --input output/06-maintenance/predicted-link-map.json
+
+# Semantic similarity → inject links
+./scripts/07-evolution/semantic-linker.sh --vault distil
+./scripts/04-graph-construction/link-injector.sh \
+  --vault distil --input output/07-evolution/semantic-link-map.json
+
+# Full analysis → vault report
+./scripts/orchestrator.sh --vault distil --phases 5
+./scripts/08-reporting/vault-report-generator.sh --vault distil
 ```
